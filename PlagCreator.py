@@ -198,23 +198,17 @@ class PlagCreator:
 
             if plag_mode == self.Plag_mode.distance_between_words:
                 if max_word_distance:  # Achtung, was passiert, wenn None gesetzt?
-                    print(plag_start)
-                    text[plag_start: plag_start] = plag[1][0]
-                    print("Plag[1:2]: " + str(plag[1:2]))
-                    print(type(word))
-                    print(len(plag))
 
-                    for word in plag[1:]:
-                        plag_start += random.randrange(max_word_distance + 1)
-                        print(plag_start)
-                        text[plag_start: plag_start] = word
-
-
+                    for i,word in enumerate(plag[1]):
+                        text.insert(plag_start,word)
+                        print("plag_start: " + str(plag_start))
+                        plag_start += random.randrange(1, max_word_distance + 1)
             else:
                 if plag_mode == self.Plag_mode.shuffled:
                     self.shuffled_plag(plag[1])
                 if plag_mode == self.Plag_mode.replace:
                     self.replace_plag(plag[1])
+
                 text[plag_start: plag_start] = plag[1]  # insert plag into surrounding text
 
             plag_text = ' '.join(text)  # convert list of words int space separated string
@@ -249,9 +243,9 @@ class PlagCreator:
             i += 1
 
 #save PlagCreator object on disk
-#pc = PlagCreator()
+pc = PlagCreator()
 #pickle.dump(pc, open("PlagCreator.p", "wb"))
 
-pc = pickle.load(open("PlagCreator.p", "rb"))
+#pc = pickle.load(open("PlagCreator.p", "rb"))
 
 pc.generate_plags(pc.Text_mode.markov, pc.Plag_mode.shuffled, 2, 200, 300, 20, "plag")
