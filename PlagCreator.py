@@ -4,6 +4,10 @@ from enum import Enum
 import pickle
 
 class PlagCreator:
+    def __init__(self):
+        self.wiki_articles = self.parse_wiki_dump()  # parse only once
+        self.words, self.db = self.make_words_list_and_db()  # make words list and db only once
+
     # text modes
     class Text_mode(Enum):
         simple = 0
@@ -13,11 +17,8 @@ class PlagCreator:
     class Plag_mode(Enum):
         one_to_one = 0
         shuffled = 1
-
-    def __init__(self):
-        self.wiki_articles = self.parse_wiki_dump()  # parse only once
-        self.words, self.db = self.make_words_list_and_db()  # make words list and db only once
-
+        replace = 2
+        distance_between_words = 3  # umnennen?
 
     def parse_wiki_dump(self):
         '''
@@ -34,20 +35,18 @@ class PlagCreator:
         texts = wiki.split("-------------------------------------------------")  # split file at each separator line
         texts = [re.sub(r'==.*==', '', x) for x in texts]  # remove section headings
         texts = [re.sub(r'[^\w]|\n|[\s]', ' ', x) for x in texts]  # remove punctuation chars
-        # texts = [re.sub(r'\d+','',x) for x in texts] #remove numbers
+        texts = [re.sub(r'\d+', '', x) for x in texts]  # remove numbers
         texts = [re.sub(r'\s{2,}', ' ', x).strip() for x in texts]  # replace multiple space chars with one space char
         texts = [x for x in texts if x != '']  # remove empty strings from list
         texts = [x.lower() for x in texts]
         texts = {texts[i]: texts[i + 1].split(' ') for i in range(0, len(texts), 2)}  # turn list into a dictionary
         return texts
 
-
     def make_words_list_and_db(self):
         '''
         Generates a list of words and dictionary for the markov chain text generator
         return: tuple with list of words and dictionary
         '''
-
         # concat all texts of all wiki articles as one bisg list of words
         words = []
         for text in self.wiki_articles.values():
@@ -121,7 +120,37 @@ class PlagCreator:
         return random_texts
 
 
-    def get_plag_text(self, plag_mode, length):
+    def shuffled_plag(self, plag):
+        random.shuffle(plag)
+
+    def replace_plag(self, plag):
+        number_replacements = int(len(plag) * 0.2)
+
+        if number_replacements == 0:
+            number_replacements = 1
+
+        replaced_indices = []
+        for _ in range(number_replacements):
+            random_position = random.randrange(len(plag))
+            while random_position in replaced_indices:
+                random_position = random.randrange(len(plag))
+            replaced_indices.append(random_position)
+
+        print(replaced_indices)
+
+        for i in replaced_indices:
+            replacement = random.choice(self.words)
+            while plag[i] == replacement:
+                replacement = random.choice(self.words)
+
+            plag[i] = replacement
+
+        return plag
+
+    # def distance_between_words(plag):
+
+
+    def get_plag_text(self, length):
         '''
         Randomly chooses a text part out of a wiki article
         param length: length of the plagiarized text part
@@ -135,14 +164,14 @@ class PlagCreator:
         start = random.randrange(0, len(self.wiki_articles[article_title]) - length)  # randomly choose start position of plag
 
         plag = self.wiki_articles[article_title][start: start + length]  # cut text part out
-        if plag_mode == self.Plag_mode.shuffled:
-            random.shuffle(plag)
+
+        print(plag)
 
         return (article_title, plag)
 
 
-    def generate_plags(self, text_mode, plag_mode, number_of_texts, min_text_length, max_text_length, plag_length,
-                       output_dir, ):
+    def generate_plags(self, text_mode, plag_mode, number_of_texts, min_text_length, max_text_length,
+                       plag_length, output_dir, max_word_distance=None):
         '''
         Generates texts with embedded plagiarism + info file for each text and outputs them to txt files
         param number_of_texts: number of texts to be generated
@@ -165,9 +194,29 @@ class PlagCreator:
         i = 0  # index for file names
         for text in random_texts:
             plag_start = random.randrange(0, len(text) - 1)  # position of plag in surrounding text
-            plag = self.get_plag_text(plag_mode, plag_length)  # randomly choose plag
+            plag = self.get_plag_text(plag_length)  # randomly choose plag
 
-            text[plag_start: plag_start] = plag[1]  # insert plag into surrounding text
+            if plag_mode == self.Plag_mode.distance_between_words:
+                if max_word_distance:  # Achtung, was passiert, wenn None gesetzt?
+                    print(plag_start)
+                    text[plag_start: plag_start] = plag[1][0]
+                    print("Plag[1:2]: " + str(plag[1:2]))
+                    print(type(word))
+                    print(len(plag))
+
+                    for word in plag[1:]:
+                        plag_start += random.randrange(max_word_distance + 1)
+                        print(plag_start)
+                        text[plag_start: plag_start] = word
+
+
+            else:
+                if plag_mode == self.Plag_mode.shuffled:
+                    self.shuffled_plag(plag[1])
+                if plag_mode == self.Plag_mode.replace:
+                    self.replace_plag(plag[1])
+                text[plag_start: plag_start] = plag[1]  # insert plag into surrounding text
+
             plag_text = ' '.join(text)  # convert list of words int space separated string
 
             # print info
@@ -198,7 +247,6 @@ class PlagCreator:
             output_file.close()
 
             i += 1
-
 
 #save PlagCreator object on disk
 #pc = PlagCreator()
