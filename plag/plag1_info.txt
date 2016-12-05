@@ -1,0 +1,6 @@
+text_length: 269
+plagiarized_article: unabhängige universität lissabon
+plagiarism_start: 63
+plagiarism_end: 83
+plagiarism_length: 20
+plagiarism_text_part: universität künste fakultät fakultät 1957 der die technologische in war humanwissenschaftenliche untergliedert premierminister rechtswissenschaftliche fakultät vier fakultät josé fakultäten sócrates
