@@ -207,4 +207,3 @@ class PlagCreator:
 pc = pickle.load(open("PlagCreator.p", "rb"))
 
 pc.generate_plags(pc.Text_mode.markov, pc.Plag_mode.shuffled, 2, 200, 300, 20, "plag")
-

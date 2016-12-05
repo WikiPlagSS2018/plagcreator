@@ -1,6 +1,0 @@
-text_length: 318
-plagiarized_article: eckbert schulz schomburgk
-plagiarism_start: 89
-plagiarism_end: 109
-plagiarism_length: 20
-plagiarism_text_part: hohenaschau im bis chiemgau danach wurde landwirtschaftswissenschaften er zum studium 1947 ausgebildet und 1946 landwirtschaftsgehilfen der von ein entlassen begann
