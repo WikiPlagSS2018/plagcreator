@@ -239,9 +239,13 @@ class PlagCreator:
 
             i += 1
 
-#save PlagCreator object on disk
-pc = PlagCreator()
-pickle.dump(pc, open("PlagCreator.p", "wb"))
-#pc = pickle.load(open("PlagCreator.p", "rb"))
+#read PlagCreator object from disk if existing, else create it
+if os.path.exists("PlagCreator.p"):
+    pc = pickle.load(open("PlagCreator.p", "rb"))
+else:
+    pc = PlagCreator()
+    pickle.dump(pc, open("PlagCreator.p", "wb"))
+
+
 
 pc.generate_plags(Text_mode.markov, Plag_mode.shuffle, 1, 1000, 2000, 30, "plag", 3)
