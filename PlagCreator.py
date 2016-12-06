@@ -116,8 +116,7 @@ class PlagCreator:
         for x in range(number_of_texts):
             seed_index = random.randrange(0, len(
                 self.words) - 3)  # randomly choose the index of the word to start with (seed)
-            w1, w2 = self.words[seed_index], self.words[
-                seed_index + 1]  # get this word and the next word from the dictionary
+            w1, w2 = self.words[seed_index], self.words[seed_index + 1]  # get the word and the next word from the dict
             text = []
             length = random.randrange(min_length, max_length)
             for i in range(length):
@@ -166,15 +165,14 @@ class PlagCreator:
         '''
 
         article_title = random.choice(list(self.wiki_articles.keys()))  # randomly choose a wiki article
-        while len(self.wiki_articles[article_title]) < length:
-            article_title = random.choice(list(self.wiki_articles.keys()))  # randomly choose a wiki article
+        while len(self.wiki_articles[article_title]) < length: # while wiki article is too short
+            article_title = random.choice(list(self.wiki_articles.keys()))
 
-        start = random.randrange(0, len(
-            self.wiki_articles[article_title]) - length)  # randomly choose start position of plag
+        # randomly choose start position of plag
+        start = random.randrange(0, len(self.wiki_articles[article_title]) - length)
 
         plag = self.wiki_articles[article_title][start: start + length]  # cut text part out
 
-        # print(plag)
 
         return (article_title, plag)
 
@@ -222,11 +220,10 @@ class PlagCreator:
                 plag_infos.append((plag[0], plag_start, plag_start + len(plag[1]) - 1, ' '.join(plag[1]),
                                    ' '.join(original_plag), plag_length, plag_mode.name))
 
-            plag_text = ' '.join(text)  # convert list of words int space separated string
+            plag_text = ' '.join(text)  # convert list of words into space separated string
 
             print(
-                "plagiarism_infos (plagiarized_article, start, end, plagiarism, text_part, lenght, plag_mode): " + str(
-                    plag_infos))
+                "plagiarism_infos (article, start, end, plagiarism, text_part, lenght, plag_mode): " + str(plag_infos))
             print("text_length: " + str(len(text)))
             print("text_with_plagiarism:\n" + plag_text)
             print("\n")
