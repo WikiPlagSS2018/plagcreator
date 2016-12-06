@@ -3,11 +3,10 @@ import random
 import re
 from enum import Enum
 import pickle
-
-# text modes
 import time
 
 
+# text modes
 class Text_mode(Enum):
     simple = 0
     markov = 1
