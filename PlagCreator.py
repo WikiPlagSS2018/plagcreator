@@ -244,4 +244,4 @@ class PlagCreator:
 #pickle.dump(pc, open("PlagCreator.p", "wb"))
 pc = pickle.load(open("PlagCreator.p", "rb"))
 
-pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, 1, 10, 20, 3, "plag", 3)
+pc.generate_plags(Text_mode.markov, Plag_mode.shuffle, 1, 1000, 2000, 30, "plag", 3)
