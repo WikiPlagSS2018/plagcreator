@@ -99,7 +99,7 @@ class PlagCreator:
 
         random_texts = []  # list with texts
         for x in range(number_of_texts):
-            length = random.randrange(min_length, max_length)
+            length = random.randint(min_length, max_length)
             text = []
             for y in range(length):
                 text.append(random.choice(words))  # randomly choosing words
@@ -117,11 +117,10 @@ class PlagCreator:
 
         random_texts = []
         for x in range(number_of_texts):
-            seed_index = random.randrange(0, len(
-                self.words) - 3)  # randomly choose the index of the word to start with (seed)
+            seed_index = random.randrange(0, len(self.words) - 3)  # randomly choose the index of the word to start with (seed)
             w1, w2 = self.words[seed_index], self.words[seed_index + 1]  # get the word and the next word from the dict
             text = []
-            length = random.randrange(min_length, max_length)
+            length = random.randint(min_length, max_length)
             for i in range(length):
                 text.append(w1)
                 w1, w2 = w2, random.choice(self.db[(w1, w2)])  # randomly choose one possible word for the selected key
@@ -170,7 +169,7 @@ class PlagCreator:
             article_title = random.choice(list(self.wiki_articles.keys()))
 
         # randomly choose start position of plag
-        start = random.randrange(0, len(self.wiki_articles[article_title]) - length)
+        start = random.randint(0, len(self.wiki_articles[article_title]) - length)
 
         plag = self.wiki_articles[article_title][start: start + length]  # cut text part out
 
@@ -198,7 +197,7 @@ class PlagCreator:
 
         i = 0  # index for file names
         for text in random_texts:
-            plag_start = random.randrange(0, len(text) - 1)  # position of plag in surrounding text
+            plag_start = random.randrange(0, len(text))  # position of plag in surrounding text
             plag = self.get_plag_text(plag_length)  # randomly choose plag
             original_plag = list(plag[1])
             plag_infos = []
@@ -210,7 +209,7 @@ class PlagCreator:
                         # print("plag_start: " + str(plag_start))
                         plag_infos.append(
                             (plag[0], plag_start, plag_start, word, ' '.join(original_plag), 1, plag_mode.name))
-                        plag_start += random.randrange(1, max_word_distance + 1)
+                        plag_start += random.randint(1, max_word_distance)
             else:
                 if plag_mode == Plag_mode.shuffle:
                     self.shuffle_plag(plag[1])
@@ -258,8 +257,9 @@ else:
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
 
-pc.generate_plags(Text_mode.markov, Plag_mode.one_to_one, number_of_texts=10,
-                  min_text_length=800, max_text_length=900,
+pc.generate_plags(Text_mode.markov, Plag_mode.one_to_one, number_of_texts=100,
+                  min_text_length=80, max_text_length=90,
                   plag_length=40, max_word_distance=4, output_dir="plag")
+
 
 print("execution time: %.3f seconds" % (time.clock() - start))
