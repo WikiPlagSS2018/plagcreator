@@ -4,7 +4,6 @@ import re
 from enum import Enum
 import pickle
 
-
 # text modes
 class Text_mode(Enum):
     simple = 0
@@ -28,7 +27,7 @@ class PlagCreator:
         return: dictionary with key: title of wiki article and value: text of wiki article as list of words
         '''
 
-        source_file = "dump/clean_dump.xml"
+        source_file = "dump/clean_dump.txt"
 
         text_file = open(source_file, "r")
         wiki = text_file.read()  # whole file in a string
@@ -239,6 +238,8 @@ class PlagCreator:
 
             i += 1
 
+            print("hi")
+
 #read PlagCreator object from disk if existing, else create it
 if os.path.exists("PlagCreator.p"):
     pc = pickle.load(open("PlagCreator.p", "rb"))
@@ -248,4 +249,4 @@ else:
 
 
 
-pc.generate_plags(Text_mode.markov, Plag_mode.shuffle, 1, 1000, 2000, 30, "plag", 3)
+pc.generate_plags(Text_mode.markov, Plag_mode.shuffle, 4, 1000, 2000, 30, "plag", 3)
