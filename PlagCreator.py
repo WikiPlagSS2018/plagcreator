@@ -4,10 +4,12 @@ import re
 from enum import Enum
 import pickle
 
+
 # text modes
 class Text_mode(Enum):
     simple = 0
     markov = 1
+
 
 # plag modes
 class Plag_mode(Enum):
@@ -15,6 +17,7 @@ class Plag_mode(Enum):
     shuffle = 1
     replace = 2
     distance_between_words = 3  # umnennen?
+
 
 class PlagCreator:
     def __init__(self):
@@ -27,6 +30,7 @@ class PlagCreator:
         return: dictionary with key: title of wiki article and value: text of wiki article as list of words
         '''
 
+        print("parsing wiki dump file...")
         source_file = "dump/clean_dump.txt"
 
         text_file = open(source_file, "r")
@@ -49,12 +53,14 @@ class PlagCreator:
         return: tuple with list of words and dictionary
         '''
         # concat all texts of all wiki articles as one bisg list of words
+        print("making words list...")
         words = []
         for text in self.wiki_articles.values():
             words.append(text)
         words = sum(words, [])  # flatten
 
         # build triples of three succeeding words with a step size of 1
+        print("making db dictionary...")
         triples = []
         if len(words) >= 3:
             for i in range(len(words) - 2):
@@ -70,7 +76,6 @@ class PlagCreator:
             else:
                 db[key] = [w3]
         return (words, db)
-
 
     def text_generator_simple(self, number_of_texts, min_length, max_length):
         '''
@@ -96,7 +101,6 @@ class PlagCreator:
             random_texts.append(text)
         return random_texts
 
-
     def text_generator_markov(self, number_of_texts, min_length, max_length):
         '''
         Generates a random text using markov chain. The generated text looks more natural
@@ -108,8 +112,10 @@ class PlagCreator:
 
         random_texts = []
         for x in range(number_of_texts):
-            seed_index = random.randrange(0, len(self.words) - 3)  # randomly choose the index of the word to start with (seed)
-            w1, w2 = self.words[seed_index], self.words[seed_index + 1]  # get this word and the next word from the dictionary
+            seed_index = random.randrange(0, len(
+                self.words) - 3)  # randomly choose the index of the word to start with (seed)
+            w1, w2 = self.words[seed_index], self.words[
+                seed_index + 1]  # get this word and the next word from the dictionary
             text = []
             length = random.randrange(min_length, max_length)
             for i in range(length):
@@ -119,7 +125,6 @@ class PlagCreator:
             random_texts.append(text)
 
         return random_texts
-
 
     def shuffle_plag(self, plag):
         random.shuffle(plag)
@@ -162,14 +167,14 @@ class PlagCreator:
         while len(self.wiki_articles[article_title]) < length:
             article_title = random.choice(list(self.wiki_articles.keys()))  # randomly choose a wiki article
 
-        start = random.randrange(0, len(self.wiki_articles[article_title]) - length)  # randomly choose start position of plag
+        start = random.randrange(0, len(
+            self.wiki_articles[article_title]) - length)  # randomly choose start position of plag
 
         plag = self.wiki_articles[article_title][start: start + length]  # cut text part out
 
-        #print(plag)
+        # print(plag)
 
         return (article_title, plag)
-
 
     def generate_plags(self, text_mode, plag_mode, number_of_texts, min_text_length, max_text_length,
                        plag_length, output_dir, max_word_distance=None):
@@ -190,7 +195,7 @@ class PlagCreator:
             print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
             return
 
-        i = 0  #index for file names
+        i = 0  # index for file names
         for text in random_texts:
             plag_start = random.randrange(0, len(text) - 1)  # position of plag in surrounding text
             plag = self.get_plag_text(plag_length)  # randomly choose plag
@@ -198,11 +203,12 @@ class PlagCreator:
             plag_infos = []
 
             if plag_mode == Plag_mode.distance_between_words:
-                if max_word_distance:  #Achtung, was passiert, wenn None gesetzt?
+                if max_word_distance:  # Achtung, was passiert, wenn None gesetzt?
                     for word in plag[1]:
-                        text.insert(plag_start,word)
-                        #print("plag_start: " + str(plag_start))
-                        plag_infos.append((plag[0], plag_start, plag_start, word, ' '.join(original_plag), 1, plag_mode.name))
+                        text.insert(plag_start, word)
+                        # print("plag_start: " + str(plag_start))
+                        plag_infos.append(
+                            (plag[0], plag_start, plag_start, word, ' '.join(original_plag), 1, plag_mode.name))
                         plag_start += random.randrange(1, max_word_distance + 1)
             else:
                 if plag_mode == Plag_mode.shuffle:
@@ -211,11 +217,14 @@ class PlagCreator:
                     self.replace_plag(plag[1])
 
                 text[plag_start: plag_start] = plag[1]  # insert plag into surrounding text
-                plag_infos.append((plag[0], plag_start, plag_start + len(plag[1]) - 1,  ' '.join(plag[1]), ' '.join(original_plag), plag_length, plag_mode.name))
+                plag_infos.append((plag[0], plag_start, plag_start + len(plag[1]) - 1, ' '.join(plag[1]),
+                                   ' '.join(original_plag), plag_length, plag_mode.name))
 
             plag_text = ' '.join(text)  # convert list of words int space separated string
 
-            print("plagiarism_infos (plagiarized_article, start, end, plagiarism, text_part, lenght, plag_mode): " + str(plag_infos))
+            print(
+                "plagiarism_infos (plagiarized_article, start, end, plagiarism, text_part, lenght, plag_mode): " + str(
+                    plag_infos))
             print("text_length: " + str(len(text)))
             print("text_with_plagiarism:\n" + plag_text)
             print("\n")
@@ -238,9 +247,7 @@ class PlagCreator:
 
             i += 1
 
-            print("hi")
-
-#read PlagCreator object from disk if existing, else create it
+# read PlagCreator object from disk if existing, else create it
 if os.path.exists("PlagCreator.p"):
     pc = pickle.load(open("PlagCreator.p", "rb"))
 else:
@@ -248,5 +255,5 @@ else:
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
 
-
-pc.generate_plags(Text_mode.markov, Plag_mode.shuffle, 4, 1000, 2000, 30, "plag", 3)
+pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=2, min_text_length=50, max_text_length=70,
+                  plag_length=15, max_word_distance=4, output_dir="plag")
