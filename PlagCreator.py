@@ -4,8 +4,10 @@ import re
 from enum import Enum
 import pickle
 
-
 # text modes
+import time
+
+
 class Text_mode(Enum):
     simple = 0
     markov = 1
@@ -247,6 +249,9 @@ class PlagCreator:
 
             i += 1
 
+
+# measure execution time
+start = time.clock()
 # read PlagCreator object from disk if existing, else create it
 if os.path.exists("PlagCreator.p"):
     pc = pickle.load(open("PlagCreator.p", "rb"))
@@ -254,6 +259,8 @@ else:
     pc = PlagCreator()
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
+pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=10,
+                  min_text_length=500, max_text_length=700,
+                  plag_length=40, max_word_distance=4, output_dir="plag")
 
-pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=2, min_text_length=50, max_text_length=70,
-                  plag_length=15, max_word_distance=4, output_dir="plag")
+print("execution time: %.3f seconds" % (time.clock() - start))
