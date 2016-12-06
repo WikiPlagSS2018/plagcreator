@@ -165,7 +165,7 @@ class PlagCreator:
 
         plag = self.wiki_articles[article_title][start: start + length]  # cut text part out
 
-        print(plag)
+        #print(plag)
 
         return (article_title, plag)
 
@@ -189,8 +189,6 @@ class PlagCreator:
             print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
             return
 
-        plag_texts = []
-
         i = 0  # index for file names
         for text in random_texts:
             plag_start = random.randrange(0, len(text) - 1)  # position of plag in surrounding text
@@ -198,10 +196,9 @@ class PlagCreator:
 
             if plag_mode == self.Plag_mode.distance_between_words:
                 if max_word_distance:  # Achtung, was passiert, wenn None gesetzt?
-
-                    for i,word in enumerate(plag[1]):
+                    for word in plag[1]:
                         text.insert(plag_start,word)
-                        print("plag_start: " + str(plag_start))
+                        #print("plag_start: " + str(plag_start))
                         plag_start += random.randrange(1, max_word_distance + 1)
             else:
                 if plag_mode == self.Plag_mode.shuffled:
@@ -243,9 +240,9 @@ class PlagCreator:
             i += 1
 
 #save PlagCreator object on disk
-pc = PlagCreator()
+#pc = PlagCreator()
 #pickle.dump(pc, open("PlagCreator.p", "wb"))
 
-#pc = pickle.load(open("PlagCreator.p", "rb"))
+pc = pickle.load(open("PlagCreator.p", "rb"))
 
-pc.generate_plags(pc.Text_mode.markov, pc.Plag_mode.shuffled, 2, 200, 300, 20, "plag")
+pc.generate_plags(pc.Text_mode.markov, pc.Plag_mode.distance_between_words, 2, 50, 60, 20, "plag", 4)
