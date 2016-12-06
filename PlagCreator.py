@@ -61,6 +61,10 @@ class PlagCreator:
             words.append(text)
         words = sum(words, [])  # flatten
 
+        # append the two first words to the end, to avoid KeyError in markov
+        words.append(words[0])
+        words.append(words[1])
+
         # build triples of three succeeding words with a step size of 1
         print("making db dictionary...")
         triples = []
@@ -143,8 +147,6 @@ class PlagCreator:
                 random_position = random.randrange(len(plag))
             replaced_indices.append(random_position)
 
-        print(replaced_indices)
-
         for i in replaced_indices:
             replacement = random.choice(self.words)
             while plag[i] == replacement:
@@ -165,7 +167,7 @@ class PlagCreator:
         '''
 
         article_title = random.choice(list(self.wiki_articles.keys()))  # randomly choose a wiki article
-        while len(self.wiki_articles[article_title]) < length: # while wiki article is too short
+        while len(self.wiki_articles[article_title]) < length:  # while wiki article is too short
             article_title = random.choice(list(self.wiki_articles.keys()))
 
         # randomly choose start position of plag
@@ -256,8 +258,9 @@ else:
     pc = PlagCreator()
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
-pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=10,
-                  min_text_length=500, max_text_length=700,
+
+pc.generate_plags(Text_mode.markov, Plag_mode.one_to_one, number_of_texts=10,
+                  min_text_length=800, max_text_length=900,
                   plag_length=40, max_word_distance=4, output_dir="plag")
 
 print("execution time: %.3f seconds" % (time.clock() - start))
