@@ -4,12 +4,10 @@ import re
 from enum import Enum
 import pickle
 import time
-
-
-# text modes
 import collections
 
 
+# text modes
 class Text_mode(Enum):
     simple = 0
     markov = 1
@@ -22,6 +20,7 @@ class Plag_mode(Enum):
     replace = 2
     distance_between_words = 3  # umnennen?
 
+
 Source_Info = collections.namedtuple('Source_Info', 'article extract start end')
 
 
@@ -33,7 +32,7 @@ class PlagCreator:
     def parse_wiki_dump(self):
         '''
         Parses a wiki dump textfile
-        return: dictionary with key: title of wiki article and value: text of wiki article as list of words
+        :return: dictionary with key: title of wiki article and value: text of wiki article as list of words
         '''
 
         print("parsing wiki dump file...")
@@ -56,7 +55,7 @@ class PlagCreator:
     def make_words_list_and_db(self):
         '''
         Generates a list of words and dictionary for the markov chain text generator
-        return: tuple with list of words and dictionary
+        :return: tuple with list of words and dictionary
         '''
         # concat all texts of all wiki articles as one bisg list of words
         print("making words list...")
@@ -90,10 +89,10 @@ class PlagCreator:
     def text_generator_simple(self, number_of_texts, min_length, max_length):
         '''
         Generates a random text out of a list of words
-        param number_of_texts: number of texts to be generated
-        param min_length: min length of the text (lower limit of a random length)
-        param max_length: max length of the text (upper limit of a random length)
-        return: list of generated texts; a text is represented as list of words
+        :param number_of_texts: number of texts to be generated
+        :param min_length: min length of the text (lower limit of a random length)
+        :param max_length: max length of the text (upper limit of a random length)
+        :return: list of generated texts; a text is represented as list of words
         '''
 
         source_file = "wordlist/germanWords.txt"
@@ -114,10 +113,10 @@ class PlagCreator:
     def text_generator_markov(self, number_of_texts, min_length, max_length):
         '''
         Generates a random text using markov chain. The generated text looks more natural
-        param number_of_texts: number of texts to be generated
-        param min_length: min length of the text (lower limit of a random length)
-        param max_length: max length of the text (upper limit of a random length)
-        return: list of generated texts; a text is represented as list of words
+        :param number_of_texts: number of texts to be generated
+        :param min_length: min length of the text (lower limit of a random length)
+        :param max_length: max length of the text (upper limit of a random length)
+        :return: list of generated texts; a text is represented as list of words
         '''
 
         random_texts = []
@@ -136,9 +135,17 @@ class PlagCreator:
         return random_texts
 
     def shuffle_plag(self, plag):
+        '''
+        Rondomly shuffles extract
+        :param plag: wiki source extract
+        '''
         random.shuffle(plag)
 
     def replace_plag(self, plag):
+        '''
+        Randomly replaces words in extract with other words
+        :param plag: wiki source extract
+        '''
         number_replacements = int(len(plag) * 0.2)
 
         if number_replacements == 0:
@@ -158,39 +165,37 @@ class PlagCreator:
 
             plag[i] = replacement
 
-        return plag
-
-    # def distance_between_words(plag):
-
-
     def get_plag_text(self, length):
         '''
         Randomly chooses a text part out of a wiki article
-        param length: length of the plagiarized text part
-        return: tuple (title of article, text part as list of words)
+        :param length: length of the plagiarized text part
+        :return: tuple (title of article, text part as list of words)
         '''
 
-        article_title = random.choice(list(self.wiki_articles.keys()))  # randomly choose a wiki article
-        while len(self.wiki_articles[article_title]) < length:  # while wiki article is too short
+        # randomly choose a wiki article
+        article_title = random.choice(list(self.wiki_articles.keys()))
+
+        # if wiki article is too short, randomly choose a different article
+        while len(self.wiki_articles[article_title]) < length:
             article_title = random.choice(list(self.wiki_articles.keys()))
 
         # randomly choose start position of plag
         start = random.randint(0, len(self.wiki_articles[article_title]) - length)
 
-        plag = self.wiki_articles[article_title][start: start + length]  # cut text part out
+        # cut text part out
+        plag = self.wiki_articles[article_title][start: start + length]
 
-        #Person(name='Jane', age=29, gender='female')
         return Source_Info(article_title, plag, start, start + len(plag) - 1)
 
     def generate_plags(self, text_mode, plag_mode, number_of_texts, min_text_length, max_text_length,
                        plag_length, output_dir, max_word_distance=1):
         '''
         Generates texts with embedded plagiarism + info file for each text and outputs them to txt files
-        param number_of_texts: number of texts to be generated
-        param min_text_length: min length of the surrounding text (lower limit of a random length)
-        param max_text_length: max length of the surrounding text (upper limit of a random length)
-        param plag_length: length of the plagiarized text part
-        param output_dir: output directory for the generated texts
+        :param number_of_texts: number of texts to be generated
+        :param min_text_length: min length of the surrounding text (lower limit of a random length)
+        :param max_text_length: max length of the surrounding text (upper limit of a random length)
+        :param plag_length: length of the plagiarized text part
+        :param output_dir: output directory for the generated texts
         '''
 
         if text_mode == Text_mode.simple:
@@ -201,69 +206,96 @@ class PlagCreator:
             print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
             return
 
-        i = 0  # index for file names
+        # used for creation of files containing target texts and infos
+        file_name_index = 0
+
         for text in random_texts:
-            plag_start_in_target_text = random.randrange(0, len(text))  # position of plag in surrounding text
-            plag = self.get_plag_text(plag_length)  # randomly choose plag
+            # position of plag in surrounding text
+            plag_start_in_target_text = random.randrange(0, len(text))
+
+            # randomly choose plag
+            plag = self.get_plag_text(plag_length)
+
+            # copy plag.extract
             extract_from_source_text = list(plag.extract)
             plag_infos = []
 
-            # article, extract from source text, plag_length in source text, plag start in target text, plag end in target text, plag text in target text, plag mode
+            # plag infos extended with infos common in all modes
+            plag_infos.extend(("article: " + plag.article,
+                               "extract_from_source_text: " + ' '.join(extract_from_source_text),
+                               "plag_start_in_source_text: " + str(plag.start),
+                               "plag_end_in_source_text: " + str(plag.end),
+                               "plag_length: " + str(plag_length)))
 
-            # article, extract from source text, plag start in source text, plag end in source text, plag_length in source text, plag text in target text, plag start in target text, plag end in target text, plag mode
-
-            plag_infos.extend(("article: " + plag.article, "extract_from_source_text: " + ' '.join(extract_from_source_text), "plag_start_in_source_text: " + str(plag.start), "plag_end_in_source_text: " + str(plag.end), "plag_length: " + str(plag_length)))
-
+            # special case: distance_between_words. Plag infos differs from other cases
             if plag_mode == Plag_mode.distance_between_words:
                 if max_word_distance:
+                    # iterate over all words in extract and insert every single word
+                    # with different distances into target text
                     for word in plag.extract:
                         text.insert(plag_start_in_target_text, word)
-                        # print("plag_start: " + str(plag_start))
-                        plag_infos.extend(("word: " + word, "word_position_target_text: " + str(plag_start_in_target_text)))
+
+                        # plag infos extended with infos in plag mode distance_between_words
+                        plag_infos.extend(("word: " + word,
+                                           "word_position_target_text: " + str(plag_start_in_target_text)))
                         plag_start_in_target_text += random.randint(1, max_word_distance)
+
+            # other plag modes
             else:
                 if plag_mode == Plag_mode.shuffle:
                     self.shuffle_plag(plag.extract)
                 if plag_mode == Plag_mode.replace:
                     self.replace_plag(plag.extract)
-                text[plag_start_in_target_text: plag_start_in_target_text] = plag.extract  # insert plag into surrounding text
+
+                # insert plag into surrounding text
+                text[plag_start_in_target_text: plag_start_in_target_text] = plag.extract
+
+                # alias for plag.extract to show that original text has changed
                 text_in_target_text = plag.extract
-                plag_infos.extend(("text_in_target_text: " + ' '.join(text_in_target_text), "plag_start_in_target_text: " + str(plag_start_in_target_text), "plag_end_in_target_text: " + str(plag_start_in_target_text + len(plag.extract) - 1)))
 
-            plag_text = ' '.join(text)  # convert list of words into space separated string
-            plag_infos.extend(("plag_mode: " + plag_mode.name, "text_length: " + str(len(text)),"text_with_plagiarism:\n" + plag_text))
+                # plag infos extended with infos common in other plag modes
+                plag_infos.extend(("text_in_target_text: " + ' '.join(text_in_target_text),
+                                   "plag_start_in_target_text: " + str(plag_start_in_target_text),
+                                   "plag_end_in_target_text: " +
+                                   str(plag_start_in_target_text + len(plag.extract) - 1)))
 
-            #print("plagiarism_infos (article, start, end, plagiarism, text_part, lenght, plag_mode): " + str(plag_infos))
-            #plag_infos_descriptions = ["article", "extract from source text", "plag start in source text","plag end in source text", "plag_length in source text", plag text in target text, plag start in target text, plag end in target text, plag mode]
+            # convert list of words into space separated string
+            plag_text = ' '.join(text)
 
+            # plag infos extended with infos common in all plag modes
+            plag_infos.extend(("plag_mode: " + plag_mode.name, "text_length: " + str(len(text)),
+                               "text_with_plagiarism:\n" + plag_text))
+
+            # concatenate plag_infos to string
             plag_infos_str = ""
             for info in plag_infos:
                 plag_infos_str += info + "\n"
 
             print(plag_infos_str)
-
             print("\n")
 
+            # create output_dir if not existing
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
 
             # write text to file
-            output_file_name = output_dir + "/plag" + str(i) + ".txt"
+            output_file_name = output_dir + "/plag" + str(file_name_index) + ".txt"
             output_file = open(output_file_name, "w")
             output_file.write(plag_text)
             output_file.close()
 
             # write info file
-            output_file_name = output_dir + "/plag" + str(i) + "_info.txt"
+            output_file_name = output_dir + "/plag" + str(file_name_index) + "_info.txt"
             output_file = open(output_file_name, "w")
             output_file.write(plag_infos_str)
             output_file.close()
 
-            i += 1
+            file_name_index += 1
 
 
 # measure execution time
 start = time.clock()
+
 # read PlagCreator object from disk if existing, else create it
 if os.path.exists("PlagCreator.p"):
     pc = pickle.load(open("PlagCreator.p", "rb"))
@@ -271,6 +303,7 @@ else:
     pc = PlagCreator()
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
+# execute generate_plags with desired parameters
 pc.generate_plags(Text_mode.markov, Plag_mode.one_to_one, number_of_texts=2,
                   min_text_length=80, max_text_length=90,
                   plag_length=15, max_word_distance=4, output_dir="plag")
