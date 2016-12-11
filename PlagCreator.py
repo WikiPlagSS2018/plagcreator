@@ -187,6 +187,14 @@ class PlagCreator:
 
         return Source_Info(article_title, plag, start, start + len(plag) - 1)
 
+    def detect_overlapping_plags(self, existing_positions, new_position):
+        '''
+        Detects overlapping of two plags
+        :param existing_positions: list of tupels the position of all plagiarisms in text
+        :param new_positions: tupel containing new intended position for plag
+        :return: true if overlapping
+        '''
+
     def generate_plags(self, text_mode, plag_mode, number_of_texts, min_text_length, max_text_length,
                        plag_length, output_dir, max_word_distance=1, number_of_plags_per_text=1):
         '''
@@ -218,6 +226,14 @@ class PlagCreator:
                 # position of plag in surrounding text
                 plag_start_in_target_text = random.randrange(0, len(text))
                 plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
+                word_pos_list = []
+
+                if plag_mode == Plag_mode.distance_between_words:
+                    for word in plag.extract:
+                        word_pos_list.append((plag_start_in_target_text,word))
+                        plag_start_in_target_text += random.randint(1, max_word_distance)
+
+                    print(word_pos_list)
 
                 # if list is not empty
                 if plag_pos_in_target_text:
@@ -255,14 +271,13 @@ class PlagCreator:
                     if max_word_distance:
                         # iterate over all words in extract and insert every single word
                         # with different distances into target text
-                        for word in plag.extract:
+                        for word_tupel in word_pos_list:
                             # insert word
-                            text.insert(plag_start_in_target_text, word)
+                            text.insert(word_tupel[0], word_tupel[1])
 
                             # plag infos extended with infos in plag mode distance_between_words
-                            plag_infos.extend(("word: " + word,
-                                               "word_position_target_text: " + str(plag_start_in_target_text)))
-                            plag_start_in_target_text += random.randint(1, max_word_distance)
+                            plag_infos.extend(("word: " + word_tupel[1],
+                                               "word_position_target_text: " + str(word_tupel[0])))
 
                 # other plag modes
                 else:
@@ -285,7 +300,8 @@ class PlagCreator:
 
                     # save plag position
                     plag_pos_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
-                    print(plag_pos_in_target_text)
+
+                print("plag_pos_i_t_text: " +str(plag_pos_in_target_text))
 
 
                 for i, word in enumerate(text):
@@ -336,7 +352,7 @@ else:
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
 # execute generate_plags with desired parameters
-pc.generate_plags(Text_mode.markov, Plag_mode.one_to_one, number_of_texts=1, number_of_plags_per_text=3,
+pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=1, number_of_plags_per_text=3,
                   min_text_length=20, max_text_length=30,
                   plag_length=5, max_word_distance=4, output_dir="plag")
 
