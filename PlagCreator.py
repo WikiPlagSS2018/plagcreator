@@ -254,34 +254,42 @@ class PlagCreator:
 
                 # special case: distance_between_words. Plag infos differs from other cases
                 if plag_mode == Plag_mode.distance_between_words:
+                    # create distance between words pattern always starting with 0
+                    random_word_positions = 0
                     for word in plag.extract:
-                        word_pos_list.append((plag_start_in_target_text, word))
-                        plag_start_in_target_text += random.randint(1, max_word_distance)
+                        word_pos_list.append((random_word_positions, word))
+                        random_word_positions += random.randint(1, max_word_distance)
 
                     print(word_pos_list)
 
-                    plag_positions_in_target_text.append((word_pos_list[0][0], word_pos_list[-1][0]))
+                    plag_end_in_target_text = word_pos_list[-1][0] + plag_start_in_target_text
+
+
+
+                    print("plag in target text vor while:" + str(plag_positions_in_target_text))
 
                     while self.detect_overlapping_plags(plag_positions_in_target_text,
                                                         (plag_start_in_target_text, plag_end_in_target_text)):
                         plag_start_in_target_text = random.randrange(0, len(text))
                         plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
 
+                    plag_positions_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
+
                     for i, elem in enumerate(plag_positions_in_target_text):
                         if plag_start_in_target_text < elem[0]:
                             plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
 
 
-                    if max_word_distance:
-                        # iterate over all words in extract and insert every single word
-                        # with different distances into target text
-                        for word_tupel in word_pos_list:
-                            # insert word
-                            text.insert(word_tupel[0], word_tupel[1])
 
-                            # plag infos extended with infos in plag mode distance_between_words
-                            plag_infos.extend(("word: " + word_tupel[1],
-                                               "word_position_target_text: " + str(word_tupel[0])))
+                    # iterate over all words in extract and insert every single word
+                    # with different distances into target text
+                    for word_tupel in word_pos_list:
+                        # insert word
+                        text.insert(word_tupel[0] + plag_start_in_target_text, word_tupel[1])
+
+                        # plag infos extended with infos in plag mode distance_between_words
+                        plag_infos.extend(("word: " + word_tupel[1],
+                                           "word_position_target_text: " + str(word_tupel[0])))
 
                 # other plag modes
                 else:
