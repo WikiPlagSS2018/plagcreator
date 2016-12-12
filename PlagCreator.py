@@ -86,7 +86,7 @@ class PlagCreator:
                 db[key] = [w3]
         return (words, db)
 
-    def text_generator_simple(self, number_of_texts, min_length, max_length):
+    def text_generator_simple(self, min_length, max_length):
         '''
         Generates a random text out of a list of words
         :param number_of_texts: number of texts to be generated
@@ -101,16 +101,14 @@ class PlagCreator:
         words = text_file.read().splitlines()  # read lines of file to list
         text_file.close()
 
-        random_texts = []  # list with texts
-        for x in range(number_of_texts):
-            length = random.randint(min_length, max_length)
-            text = []
-            for y in range(length):
-                text.append(random.choice(words))  # randomly choosing words
-            random_texts.append(text)
-        return random_texts
+        length = random.randint(min_length, max_length)
+        text = []
+        for y in range(length):
+            text.append(random.choice(words))  # randomly choosing words
 
-    def text_generator_markov(self, number_of_texts, min_length, max_length):
+        return text
+
+    def text_generator_markov(self, min_length, max_length):
         '''
         Generates a random text using markov chain. The generated text looks more natural
         :param number_of_texts: number of texts to be generated
@@ -119,20 +117,17 @@ class PlagCreator:
         :return: list of generated texts; a text is represented as list of words
         '''
 
-        random_texts = []
-        for x in range(number_of_texts):
-            seed_index = random.randrange(0, len(
-                self.words) - 3)  # randomly choose the index of the word to start with (seed)
-            w1, w2 = self.words[seed_index], self.words[seed_index + 1]  # get the word and the next word from the dict
-            text = []
-            length = random.randint(min_length, max_length)
-            for i in range(length):
-                text.append(w1)
-                w1, w2 = w2, random.choice(self.db[(w1, w2)])  # randomly choose one possible word for the selected key
-            text.append(w2)
-            random_texts.append(text)
+        # randomly choose the index of the word to start with (seed)
+        seed_index = random.randrange(0, len(self.words) - 3)
+        w1, w2 = self.words[seed_index], self.words[seed_index + 1]  # get the word and the next word from the dict
+        text = []
+        length = random.randint(min_length, max_length)
+        for i in range(length):
+            text.append(w1)
+            w1, w2 = w2, random.choice(self.db[(w1, w2)])  # randomly choose one possible word for the selected key
+        text.append(w2)
 
-        return random_texts
+        return text
 
     def shuffle_plag(self, plag):
         '''
@@ -219,25 +214,26 @@ class PlagCreator:
         :param output_dir: output directory for the generated texts
         '''
 
-        if text_mode == Text_mode.simple:
-            random_texts = self.text_generator_simple(number_of_texts, min_text_length, max_text_length)
-        elif text_mode == Text_mode.markov:
-            random_texts = self.text_generator_markov(number_of_texts, min_text_length, max_text_length)
-        else:
-            print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
-            return
 
-        if (number_of_plags_per_text == 0):
-            for text in random_texts:
-                target_text_length = str(len(text))
-                target_text = ' '.join(text)
 
         # used for creation of files containing target texts and infos
         file_name_index = 0
 
         plag_infos = []
 
-        for text in random_texts:
+        for _ in range(number_of_texts):
+            if text_mode == Text_mode.simple:
+                text = self.text_generator_simple(min_text_length, max_text_length)
+            elif text_mode == Text_mode.markov:
+                text = self.text_generator_markov(min_text_length, max_text_length)
+            else:
+                print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
+                return
+
+            if (number_of_plags_per_text == 0):
+                target_text_length = str(len(text))
+                target_text = ' '.join(text)
+
             plag_positions_in_target_text = []
             for _ in range(number_of_plags_per_text):
                 # randomly choose plag
@@ -342,40 +338,40 @@ class PlagCreator:
                 # plag infos extended with infos common in all plag modes
                 plag_infos.extend(("plag_mode: " + plag_mode.name, "target_text_length: " + str(len(text))))
 
-        # concatenate plag_infos to string
-        plag_infos_str = ""
+            # concatenate plag_infos to string
+            plag_infos_str = ""
 
-        # when number_of_plags_per_text = 0 then no plag_infos list ist created
+            # when number_of_plags_per_text = 0 then no plag_infos list ist created
 
-        for info in plag_infos:
-            plag_infos_str += info + "\n"
+            for info in plag_infos:
+                plag_infos_str += info + "\n"
 
-        if(number_of_plags_per_text == 0):
-            plag_infos_str += "target_text_length: " +target_text_length
+            if(number_of_plags_per_text == 0):
+                plag_infos_str += "target_text_length: " +target_text_length
 
-        print(plag_infos_str)
+            print(plag_infos_str)
 
 
 
-        print("target_text:" +target_text)
-        print("\n")
+            print("target_text:" +target_text)
+            print("\n")
 
-        # create output_dir if not existing
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        # write text to file
-        output_file_name = output_dir + "/plag" + str(file_name_index) + ".txt"
-        output_file = open(output_file_name, "w")
-        output_file.write(target_text)
-        output_file.close()
+            # create output_dir if not existing
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            # write text to file
+            output_file_name = output_dir + "/plag" + str(file_name_index) + ".txt"
+            output_file = open(output_file_name, "w")
+            output_file.write(target_text)
+            output_file.close()
 
-        # write info file
-        output_file_name = output_dir + "/plag" + str(file_name_index) + "_info.txt"
-        output_file = open(output_file_name, "w")
-        output_file.write(plag_infos_str)
-        output_file.close()
+            # write info file
+            output_file_name = output_dir + "/plag" + str(file_name_index) + "_info.txt"
+            output_file = open(output_file_name, "w")
+            output_file.write(plag_infos_str)
+            output_file.close()
 
-        file_name_index += 1
+            file_name_index += 1
 
 
 
@@ -390,8 +386,8 @@ else:
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
 # execute generate_plags with desired parameters
-pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=1, number_of_plags_per_text=0,
-                  min_text_length=20, max_text_length=30,
-                  plag_length=5, max_word_distance=4, output_dir="plag")
+pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=10000, number_of_plags_per_text=1,
+                  min_text_length=100, max_text_length=200,
+                  plag_length=10, max_word_distance=4, output_dir="plag")
 
 print("execution time: %.3f seconds" % (time.clock() - start))
