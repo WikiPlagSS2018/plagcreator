@@ -18,7 +18,7 @@ class Plag_mode(Enum):
     one_to_one = 0
     shuffle = 1
     replace = 2
-    distance_between_words = 3  # umnennen?
+    distance_between_words = 3
 
 
 Source_Info = collections.namedtuple('Source_Info', 'article extract start end')
@@ -227,8 +227,15 @@ class PlagCreator:
             print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
             return
 
+        if (number_of_plags_per_text == 0):
+            for text in random_texts:
+                target_text_length = str(len(text))
+                target_text = ' '.join(text)
+
         # used for creation of files containing target texts and infos
         file_name_index = 0
+
+        plag_infos = []
 
         for text in random_texts:
             plag_positions_in_target_text = []
@@ -284,8 +291,10 @@ class PlagCreator:
                     # iterate over all words in extract and insert every single word
                     # with different distances into target text
                     for word_tupel in word_pos_list:
+                        # move plagiarism block to correct position
+                        word_tupel = (word_tupel[0] + plag_start_in_target_text, word_tupel[1])
                         # insert word
-                        text.insert(word_tupel[0] + plag_start_in_target_text, word_tupel[1])
+                        text.insert(word_tupel[0], word_tupel[1])
 
                         # plag infos extended with infos in plag mode distance_between_words
                         plag_infos.extend(("word: " + word_tupel[1],
@@ -328,37 +337,46 @@ class PlagCreator:
                     print(str(i) + ": " + word)
 
                 # convert list of words into space separated string
-                plag_text = ' '.join(text)
+                target_text = ' '.join(text)
 
                 # plag infos extended with infos common in all plag modes
-                plag_infos.extend(("plag_mode: " + plag_mode.name, "text_length: " + str(len(text)),
-                                   "text_with_plagiarism:\n" + plag_text))
+                plag_infos.extend(("plag_mode: " + plag_mode.name, "target_text_length: " + str(len(text))))
 
-                # concatenate plag_infos to string
-                plag_infos_str = ""
-                for info in plag_infos:
-                    plag_infos_str += info + "\n"
+        # concatenate plag_infos to string
+        plag_infos_str = ""
 
-                print(plag_infos_str)
-                print("\n")
+        # when number_of_plags_per_text = 0 then no plag_infos list ist created
 
-                # create output_dir if not existing
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
+        for info in plag_infos:
+            plag_infos_str += info + "\n"
 
-                # write text to file
-                output_file_name = output_dir + "/plag" + str(file_name_index) + ".txt"
-                output_file = open(output_file_name, "w")
-                output_file.write(plag_text)
-                output_file.close()
+        if(number_of_plags_per_text == 0):
+            plag_infos_str += "target_text_length: " +target_text_length
 
-                # write info file
-                output_file_name = output_dir + "/plag" + str(file_name_index) + "_info.txt"
-                output_file = open(output_file_name, "w")
-                output_file.write(plag_infos_str)
-                output_file.close()
+        print(plag_infos_str)
 
-                file_name_index += 1
+
+
+        print("target_text:" +target_text)
+        print("\n")
+
+        # create output_dir if not existing
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        # write text to file
+        output_file_name = output_dir + "/plag" + str(file_name_index) + ".txt"
+        output_file = open(output_file_name, "w")
+        output_file.write(target_text)
+        output_file.close()
+
+        # write info file
+        output_file_name = output_dir + "/plag" + str(file_name_index) + "_info.txt"
+        output_file = open(output_file_name, "w")
+        output_file.write(plag_infos_str)
+        output_file.close()
+
+        file_name_index += 1
+
 
 
 # measure execution time
@@ -372,7 +390,7 @@ else:
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
 # execute generate_plags with desired parameters
-pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=1, number_of_plags_per_text=3,
+pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=1, number_of_plags_per_text=0,
                   min_text_length=20, max_text_length=30,
                   plag_length=5, max_word_distance=4, output_dir="plag")
 
