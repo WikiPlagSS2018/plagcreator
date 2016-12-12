@@ -191,22 +191,22 @@ class PlagCreator:
         '''
         Detects overlapping of two plags
         :param existing_positions: list of tupels the position of all plagiarisms in text
-        :param new_positions: tupel containing new intended position for plag
+        :param new_position: tupel containing new intended position for plag
         :return: true if overlapping
         '''
 
+        overlapping = False
+
         # if list is not empty
         if existing_positions:
-            result = False
             for pos in existing_positions:
                 print("existing pos: " + str(pos))
                 if new_position[0] <= pos[1] and pos[0] <= new_position[1]:
-                    result = True
+                    overlapping = True
         else:
             print("existing_postions empty!")
 
-        return result
-
+        return overlapping
 
     def generate_plags(self, text_mode, plag_mode, number_of_texts, min_text_length, max_text_length,
                        plag_length, output_dir, max_word_distance=1, number_of_plags_per_text=1):
@@ -231,7 +231,7 @@ class PlagCreator:
         file_name_index = 0
 
         for text in random_texts:
-            plag_pos_in_target_text = []
+            plag_positions_in_target_text = []
             for _ in range(number_of_plags_per_text):
                 # randomly choose plag
                 plag = self.get_plag_text(plag_length)
@@ -240,36 +240,6 @@ class PlagCreator:
                 plag_start_in_target_text = random.randrange(0, len(text))
                 plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
                 word_pos_list = []
-
-                if plag_mode == Plag_mode.distance_between_words:
-                    for word in plag.extract:
-                        word_pos_list.append((plag_start_in_target_text,word))
-                        plag_start_in_target_text += random.randint(1, max_word_distance)
-
-                    print(word_pos_list)
-
-                # if list is not empty
-                if plag_pos_in_target_text:
-                    # check if overlap then new start position
-                    should_restart = True
-                    while should_restart:
-                        should_restart = False
-                        for pos in plag_pos_in_target_text:
-                            print("existing pos: " + str(pos))
-                            if plag_start_in_target_text <= pos[1] and pos[0] <= plag_end_in_target_text:
-                                should_restart = True
-                                print("overlapping pos: (" + str(plag_start_in_target_text) + ", " + str(plag_end_in_target_text) + ")")
-                                plag_start_in_target_text = random.randrange(0, len(text))
-                                plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
-                                print("new pos: (" + str(plag_start_in_target_text) + ", " + str(plag_end_in_target_text) + ")")
-                                break
-                            else:
-                                for pos in plag_pos_in_target_text:
-                                    if plag_start_in_target_text < pos[0]:
-                                        pos = (pos[0] + plag_length, pos[1] + plag_length)
-
-
-
 
                 # copy plag.extract
                 extract_from_source_text = list(plag.extract)
@@ -284,6 +254,24 @@ class PlagCreator:
 
                 # special case: distance_between_words. Plag infos differs from other cases
                 if plag_mode == Plag_mode.distance_between_words:
+                    for word in plag.extract:
+                        word_pos_list.append((plag_start_in_target_text, word))
+                        plag_start_in_target_text += random.randint(1, max_word_distance)
+
+                    print(word_pos_list)
+
+                    plag_positions_in_target_text.append((word_pos_list[0][0], word_pos_list[-1][0]))
+
+                    while self.detect_overlapping_plags(plag_positions_in_target_text,
+                                                        (plag_start_in_target_text, plag_end_in_target_text)):
+                        plag_start_in_target_text = random.randrange(0, len(text))
+                        plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
+
+                    for i, elem in enumerate(plag_positions_in_target_text):
+                        if plag_start_in_target_text < elem[0]:
+                            plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
+
+
                     if max_word_distance:
                         # iterate over all words in extract and insert every single word
                         # with different distances into target text
@@ -297,6 +285,15 @@ class PlagCreator:
 
                 # other plag modes
                 else:
+                    while self.detect_overlapping_plags(plag_positions_in_target_text,
+                                                        (plag_start_in_target_text, plag_end_in_target_text)):
+                        plag_start_in_target_text = random.randrange(0, len(text))
+                        plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
+
+                    for i, elem in enumerate(plag_positions_in_target_text):
+                        if plag_start_in_target_text < elem[0]:
+                            plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
+
                     if plag_mode == Plag_mode.shuffle:
                         self.shuffle_plag(plag.extract)
                     if plag_mode == Plag_mode.replace:
@@ -315,10 +312,9 @@ class PlagCreator:
                                        str(plag_end_in_target_text)))
 
                     # save plag position
-                    plag_pos_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
+                    plag_positions_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
 
-                print("plag_pos_i_t_text: " +str(plag_pos_in_target_text))
-
+                print("plag_pos_i_t_text: " + str(plag_positions_in_target_text))
 
                 for i, word in enumerate(text):
                     print(str(i) + ": " + word)
