@@ -195,6 +195,19 @@ class PlagCreator:
         :return: true if overlapping
         '''
 
+        # if list is not empty
+        if existing_positions:
+            result = False
+            for pos in existing_positions:
+                print("existing pos: " + str(pos))
+                if new_position[0] <= pos[1] and pos[0] <= new_position[1]:
+                    result = True
+        else:
+            print("existing_postions empty!")
+
+        return result
+
+
     def generate_plags(self, text_mode, plag_mode, number_of_texts, min_text_length, max_text_length,
                        plag_length, output_dir, max_word_distance=1, number_of_plags_per_text=1):
         '''
@@ -254,6 +267,9 @@ class PlagCreator:
                                 for pos in plag_pos_in_target_text:
                                     if plag_start_in_target_text < pos[0]:
                                         pos = (pos[0] + plag_length, pos[1] + plag_length)
+
+
+
 
                 # copy plag.extract
                 extract_from_source_text = list(plag.extract)
