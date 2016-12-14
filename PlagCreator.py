@@ -38,19 +38,30 @@ class PlagCreator:
         print("parsing wiki dump file...")
         source_file = "dump/clean_dump.txt"
 
+
         text_file = open(source_file, "r")
         wiki = text_file.read()  # whole file in a string
         text_file.close()
 
         texts = wiki.split("-------------------------------------------------")  # split file at each separator line
-        texts = [re.sub(r'==.*==', '', x) for x in texts]  # remove section headings
-        texts = [re.sub(r'[^\w]|\n|[\s]', ' ', x) for x in texts]  # remove punctuation chars
-        texts = [re.sub(r'\d+', '', x) for x in texts]  # remove numbers
-        texts = [re.sub(r'\s{2,}', ' ', x).strip() for x in texts]  # replace multiple space chars with one space char
-        texts = [x for x in texts if x != '']  # remove empty strings from list
-        texts = [x.lower() for x in texts]
-        texts = {texts[i]: texts[i + 1].split(' ') for i in range(0, len(texts), 2)}  # turn list into a dictionary
-        return texts
+        texts = [re.sub(r'[\n]|[\s]', ' ', x) for x in texts]
+        texts = [re.sub(r'\s{2,}', ' ', x).strip() for x in texts]
+        texts = [x for x in texts if x != '']
+
+
+        text_dict = {}
+        for i in range(0, len(texts), 2):
+            split_title = texts[i].split('] ')
+            text_dict[(split_title[0][1:], split_title[1])] = texts[i + 1]  # turn list into a
+
+        text_dict = {k: re.sub(r'==.*==', '', text_dict[k]) for k in text_dict}  # remove section headings
+        text_dict = {k: re.sub(r'[^\w]|\n|[\s]', ' ', text_dict[k]) for k in text_dict}  # remove punctuation chars
+        text_dict = {k: re.sub(r'\d+', '', text_dict[k]) for k in text_dict} # remove numbers
+        text_dict = {k: re.sub(r'\s{2,}', ' ', text_dict[k]) for k in text_dict} # replace multiple space chars with one space char
+        text_dict = {k: text_dict[k].lower().split(' ') for k in text_dict}
+
+
+        return text_dict
 
     def make_words_list_and_db(self):
         '''
@@ -195,11 +206,8 @@ class PlagCreator:
         # if list is not empty
         if existing_positions:
             for pos in existing_positions:
-                print("existing pos: " + str(pos))
                 if new_position[0] <= pos[1] and pos[0] <= new_position[1]:
                     overlapping = True
-        else:
-            print("existing_postions empty!")
 
         return overlapping
 
@@ -249,7 +257,8 @@ class PlagCreator:
                 plag_infos = []
 
                 # plag infos extended with infos common in all modes
-                plag_infos.extend(("article: " + plag.article,
+                plag_infos.extend(("source_text_ID: " + plag.article[0],
+                                   "source_text_title: " + plag.article[1],
                                    "extract_from_source_text: " + ' '.join(extract_from_source_text),
                                    "plag_start_in_source_text: " + str(plag.start),
                                    "plag_end_in_source_text: " + str(plag.end),
@@ -263,13 +272,9 @@ class PlagCreator:
                         word_pos_list.append((random_word_positions, word))
                         random_word_positions += random.randint(1, max_word_distance)
 
-                    print(word_pos_list)
 
                     plag_end_in_target_text = word_pos_list[-1][0] + plag_start_in_target_text
 
-
-
-                    print("plag in target text vor while:" + str(plag_positions_in_target_text))
 
                     while self.detect_overlapping_plags(plag_positions_in_target_text,
                                                         (plag_start_in_target_text, plag_end_in_target_text)):
@@ -327,11 +332,6 @@ class PlagCreator:
                     # save plag position
                     plag_positions_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
 
-                print("plag_pos_i_t_text: " + str(plag_positions_in_target_text))
-
-                for i, word in enumerate(text):
-                    print(str(i) + ": " + word)
-
                 # convert list of words into space separated string
                 target_text = ' '.join(text)
 
@@ -386,8 +386,8 @@ else:
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
 # execute generate_plags with desired parameters
-pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=10000, number_of_plags_per_text=1,
-                  min_text_length=100, max_text_length=200,
+pc.generate_plags(Text_mode.markov, Plag_mode.shuffle, number_of_texts=10, number_of_plags_per_text=1,
+                  min_text_length=100, max_text_length=500,
                   plag_length=10, max_word_distance=4, output_dir="plag")
 
 print("execution time: %.3f seconds" % (time.clock() - start))
