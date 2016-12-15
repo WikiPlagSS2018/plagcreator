@@ -5,6 +5,7 @@ from enum import Enum
 import pickle
 import time
 import collections
+import csv
 
 
 # text modes
@@ -225,153 +226,162 @@ class PlagCreator:
 
 
         # used for creation of files containing target texts and infos
-        file_name_index = 0
+        plag_ID = 0
 
         plag_infos = []
 
-        for _ in range(number_of_texts):
-            if text_mode == Text_mode.simple:
-                text = self.text_generator_simple(min_text_length, max_text_length)
-            elif text_mode == Text_mode.markov:
-                text = self.text_generator_markov(min_text_length, max_text_length)
-            else:
-                print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
-                return
+        with open('plag_infos.csv', 'w') as csvfile:
+            fieldnames = ['plag_ID', 'article_ID', 'start_in_source_text', 'end_in_source_text', 'plag_mode']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
 
-            if (number_of_plags_per_text == 0):
-                target_text_length = str(len(text))
-                target_text = ' '.join(text)
-
-            plag_positions_in_target_text = []
-            for _ in range(number_of_plags_per_text):
-                # randomly choose plag
-                plag = self.get_plag_text(plag_length)
-
-                # position of plag in surrounding text
-                plag_start_in_target_text = random.randrange(0, len(text))
-                plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
-                word_pos_list = []
-
-                # copy plag.extract
-                extract_from_source_text = list(plag.extract)
-                plag_infos = []
-
-                # plag infos extended with infos common in all modes
-                plag_infos.extend(("source_text_ID: " + plag.article[0],
-                                   "source_text_title: " + plag.article[1],
-                                   "extract_from_source_text: " + ' '.join(extract_from_source_text),
-                                   "plag_start_in_source_text: " + str(plag.start),
-                                   "plag_end_in_source_text: " + str(plag.end),
-                                   "plag_length: " + str(plag_length)))
-
-                # special case: distance_between_words. Plag infos differs from other cases
-                if plag_mode == Plag_mode.distance_between_words:
-                    # create distance between words pattern always starting with 0
-                    random_word_positions = 0
-                    for word in plag.extract:
-                        word_pos_list.append((random_word_positions, word))
-                        random_word_positions += random.randint(1, max_word_distance)
-
-
-                    plag_end_in_target_text = word_pos_list[-1][0] + plag_start_in_target_text
-
-
-                    while self.detect_overlapping_plags(plag_positions_in_target_text,
-                                                        (plag_start_in_target_text, plag_end_in_target_text)):
-                        plag_start_in_target_text = random.randrange(0, len(text))
-                        plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
-
-                    plag_positions_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
-
-                    for i, elem in enumerate(plag_positions_in_target_text):
-                        if plag_start_in_target_text < elem[0]:
-                            plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
-
-
-
-                    # iterate over all words in extract and insert every single word
-                    # with different distances into target text
-                    for word_tupel in word_pos_list:
-                        # move plagiarism block to correct position
-                        word_tupel = (word_tupel[0] + plag_start_in_target_text, word_tupel[1])
-                        # insert word
-                        text.insert(word_tupel[0], word_tupel[1])
-
-                        # plag infos extended with infos in plag mode distance_between_words
-                        plag_infos.extend(("word: " + word_tupel[1],
-                                           "word_position_target_text: " + str(word_tupel[0])))
-
-                # other plag modes
+            for _ in range(number_of_texts):
+                if text_mode == Text_mode.simple:
+                    text = self.text_generator_simple(min_text_length, max_text_length)
+                elif text_mode == Text_mode.markov:
+                    text = self.text_generator_markov(min_text_length, max_text_length)
                 else:
-                    while self.detect_overlapping_plags(plag_positions_in_target_text,
-                                                        (plag_start_in_target_text, plag_end_in_target_text)):
-                        plag_start_in_target_text = random.randrange(0, len(text))
-                        plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
+                    print("NO SUCH TEXT MODE (" + str(text_mode) + ")!")
+                    return
 
-                    for i, elem in enumerate(plag_positions_in_target_text):
-                        if plag_start_in_target_text < elem[0]:
-                            plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
+                if (number_of_plags_per_text == 0):
+                    target_text_length = str(len(text))
+                    target_text = ' '.join(text)
 
-                    if plag_mode == Plag_mode.shuffle:
-                        self.shuffle_plag(plag.extract)
-                    if plag_mode == Plag_mode.replace:
-                        self.replace_plag(plag.extract)
+                plag_positions_in_target_text = []
+                for _ in range(number_of_plags_per_text):
+                    # randomly choose plag
+                    plag = self.get_plag_text(plag_length)
 
-                    # insert plag into surrounding text
-                    text[plag_start_in_target_text: plag_start_in_target_text] = plag.extract
+                    # position of plag in surrounding text
+                    plag_start_in_target_text = random.randrange(0, len(text))
+                    plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
+                    word_pos_list = []
 
-                    # alias for plag.extract to show that original text has changed
-                    text_in_target_text = plag.extract
+                    # copy plag.extract
+                    extract_from_source_text = list(plag.extract)
+                    plag_infos = []
 
-                    # plag infos extended with infos common in other plag modes
-                    plag_infos.extend(("text_in_target_text: " + ' '.join(text_in_target_text),
-                                       "plag_start_in_target_text: " + str(plag_start_in_target_text),
-                                       "plag_end_in_target_text: " +
-                                       str(plag_end_in_target_text)))
+                    # plag infos extended with infos common in all modes
+                    plag_infos.extend(("source_text_ID: " + plag.article[0],
+                                       "source_text_title: " + plag.article[1],
+                                       "extract_from_source_text: " + ' '.join(extract_from_source_text),
+                                       "plag_start_in_source_text: " + str(plag.start),
+                                       "plag_end_in_source_text: " + str(plag.end),
+                                       "plag_length: " + str(plag_length)))
 
-                    # save plag position
-                    plag_positions_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
-
-                # convert list of words into space separated string
-                target_text = ' '.join(text)
-
-                # plag infos extended with infos common in all plag modes
-                plag_infos.extend(("plag_mode: " + plag_mode.name, "target_text_length: " + str(len(text))))
-
-            # concatenate plag_infos to string
-            plag_infos_str = ""
-
-            # when number_of_plags_per_text = 0 then no plag_infos list ist created
-
-            for info in plag_infos:
-                plag_infos_str += info + "\n"
-
-            if(number_of_plags_per_text == 0):
-                plag_infos_str += "target_text_length: " +target_text_length
-
-            print(plag_infos_str)
+                    # special case: distance_between_words. Plag infos differs from other cases
+                    if plag_mode == Plag_mode.distance_between_words:
+                        # create distance between words pattern always starting with 0
+                        random_word_positions = 0
+                        for word in plag.extract:
+                            word_pos_list.append((random_word_positions, word))
+                            random_word_positions += random.randint(1, max_word_distance)
 
 
+                        plag_end_in_target_text = word_pos_list[-1][0] + plag_start_in_target_text
 
-            print("target_text:" +target_text)
-            print("\n")
 
-            # create output_dir if not existing
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-            # write text to file
-            output_file_name = output_dir + "/plag" + str(file_name_index) + ".txt"
-            output_file = open(output_file_name, "w")
-            output_file.write(target_text)
-            output_file.close()
+                        while self.detect_overlapping_plags(plag_positions_in_target_text,
+                                                            (plag_start_in_target_text, plag_end_in_target_text)):
+                            plag_start_in_target_text = random.randrange(0, len(text))
+                            plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
 
-            # write info file
-            output_file_name = output_dir + "/plag" + str(file_name_index) + "_info.txt"
-            output_file = open(output_file_name, "w")
-            output_file.write(plag_infos_str)
-            output_file.close()
+                        plag_positions_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
 
-            file_name_index += 1
+                        for i, elem in enumerate(plag_positions_in_target_text):
+                            if plag_start_in_target_text < elem[0]:
+                                plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
+
+
+
+                        # iterate over all words in extract and insert every single word
+                        # with different distances into target text
+                        for word_tupel in word_pos_list:
+                            # move plagiarism block to correct position
+                            word_tupel = (word_tupel[0] + plag_start_in_target_text, word_tupel[1])
+                            # insert word
+                            text.insert(word_tupel[0], word_tupel[1])
+
+                            # plag infos extended with infos in plag mode distance_between_words
+                            plag_infos.extend(("word: " + word_tupel[1],
+                                               "word_position_target_text: " + str(word_tupel[0])))
+
+                    # other plag modes
+                    else:
+                        while self.detect_overlapping_plags(plag_positions_in_target_text,
+                                                            (plag_start_in_target_text, plag_end_in_target_text)):
+                            plag_start_in_target_text = random.randrange(0, len(text))
+                            plag_end_in_target_text = plag_start_in_target_text + len(plag.extract) - 1
+
+                        for i, elem in enumerate(plag_positions_in_target_text):
+                            if plag_start_in_target_text < elem[0]:
+                                plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
+
+                        if plag_mode == Plag_mode.shuffle:
+                            self.shuffle_plag(plag.extract)
+                        if plag_mode == Plag_mode.replace:
+                            self.replace_plag(plag.extract)
+
+                        # insert plag into surrounding text
+                        text[plag_start_in_target_text: plag_start_in_target_text] = plag.extract
+
+                        # alias for plag.extract to show that original text has changed
+                        text_in_target_text = plag.extract
+
+                        # plag infos extended with infos common in other plag modes
+                        plag_infos.extend(("text_in_target_text: " + ' '.join(text_in_target_text),
+                                           "plag_start_in_target_text: " + str(plag_start_in_target_text),
+                                           "plag_end_in_target_text: " +
+                                           str(plag_end_in_target_text)))
+
+                        # save plag position
+                        plag_positions_in_target_text.append((plag_start_in_target_text, plag_end_in_target_text))
+
+                    # convert list of words into space separated string
+                    target_text = ' '.join(text)
+
+                    # plag infos extended with infos common in all plag modes
+                    plag_infos.extend(("plag_mode: " + plag_mode.name, "target_text_length: " + str(len(text))))
+
+                    writer.writerow({'plag_ID': plag_ID , 'article_ID': plag.article[0],
+                                     'start_in_source_text': plag.start, 'end_in_source_text': plag.end,
+                                     'plag_mode': plag_mode.value})
+
+                # concatenate plag_infos to string
+                plag_infos_str = ""
+
+                # when number_of_plags_per_text = 0 then no plag_infos list ist created
+
+                for info in plag_infos:
+                    plag_infos_str += info + "\n"
+
+                if(number_of_plags_per_text == 0):
+                    plag_infos_str += "target_text_length: " + target_text_length
+
+                print(plag_infos_str)
+
+
+
+                print("target_text:\n" +target_text)
+                print("\n")
+
+                # create output_dir if not existing
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+                # write text to file
+                output_file_name = output_dir + "/plag" + str(plag_ID) + ".txt"
+                output_file = open(output_file_name, "w")
+                output_file.write(target_text)
+                output_file.close()
+
+                # write info file
+                output_file_name = output_dir + "/plag" + str(plag_ID) + "_info.txt"
+                output_file = open(output_file_name, "w")
+                output_file.write(plag_infos_str)
+                output_file.close()
+
+                plag_ID += 1
 
 
 
@@ -386,7 +396,7 @@ else:
     pickle.dump(pc, open("PlagCreator.p", "wb"))
 
 # execute generate_plags with desired parameters
-pc.generate_plags(Text_mode.markov, Plag_mode.shuffle, number_of_texts=10, number_of_plags_per_text=1,
+pc.generate_plags(Text_mode.markov, Plag_mode.distance_between_words, number_of_texts=10, number_of_plags_per_text=2,
                   min_text_length=100, max_text_length=500,
                   plag_length=10, max_word_distance=4, output_dir="plag")
 
