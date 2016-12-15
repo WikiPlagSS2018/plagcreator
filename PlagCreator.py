@@ -39,7 +39,6 @@ class PlagCreator:
         print("parsing wiki dump file...")
         source_file = "dump/clean_dump.txt"
 
-
         text_file = open(source_file, "r")
         wiki = text_file.read()  # whole file in a string
         text_file.close()
@@ -49,7 +48,6 @@ class PlagCreator:
         texts = [re.sub(r'\s{2,}', ' ', x).strip() for x in texts]
         texts = [x for x in texts if x != '']
 
-
         text_dict = {}
         for i in range(0, len(texts), 2):
             split_title = texts[i].split('] ')
@@ -57,10 +55,10 @@ class PlagCreator:
 
         text_dict = {k: re.sub(r'==.*==', '', text_dict[k]) for k in text_dict}  # remove section headings
         text_dict = {k: re.sub(r'[^\w]|\n|[\s]', ' ', text_dict[k]) for k in text_dict}  # remove punctuation chars
-        text_dict = {k: re.sub(r'\d+', '', text_dict[k]) for k in text_dict} # remove numbers
-        text_dict = {k: re.sub(r'\s{2,}', ' ', text_dict[k]) for k in text_dict} # replace multiple space chars with one space char
+        text_dict = {k: re.sub(r'\d+', '', text_dict[k]) for k in text_dict}  # remove numbers
+        text_dict = {k: re.sub(r'\s{2,}', ' ', text_dict[k]) for k in
+                     text_dict}  # replace multiple space chars with one space char
         text_dict = {k: text_dict[k].lower().split(' ') for k in text_dict}
-
 
         return text_dict
 
@@ -223,14 +221,16 @@ class PlagCreator:
         :param output_dir: output directory for the generated texts
         '''
 
-
-
         # used for creation of files containing target texts and infos
         plag_ID = 0
 
         plag_infos = []
 
-        with open('plag_infos.csv', 'w') as csvfile:
+        # create output_dir if not existing
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        with open(output_dir + '/plag_infos.csv', 'w') as csvfile:
             fieldnames = ['plag_ID', 'article_ID', 'start_in_source_text', 'end_in_source_text', 'plag_mode']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
@@ -278,9 +278,7 @@ class PlagCreator:
                             word_pos_list.append((random_word_positions, word))
                             random_word_positions += random.randint(1, max_word_distance)
 
-
                         plag_end_in_target_text = word_pos_list[-1][0] + plag_start_in_target_text
-
 
                         while self.detect_overlapping_plags(plag_positions_in_target_text,
                                                             (plag_start_in_target_text, plag_end_in_target_text)):
@@ -292,8 +290,6 @@ class PlagCreator:
                         for i, elem in enumerate(plag_positions_in_target_text):
                             if plag_start_in_target_text < elem[0]:
                                 plag_positions_in_target_text[i] = (elem[0] + plag_length, elem[1] + plag_length)
-
-
 
                         # iterate over all words in extract and insert every single word
                         # with different distances into target text
@@ -344,7 +340,7 @@ class PlagCreator:
                     # plag infos extended with infos common in all plag modes
                     plag_infos.extend(("plag_mode: " + plag_mode.name, "target_text_length: " + str(len(text))))
 
-                    writer.writerow({'plag_ID': plag_ID , 'article_ID': plag.article[0],
+                    writer.writerow({'plag_ID': plag_ID, 'article_ID': plag.article[0],
                                      'start_in_source_text': plag.start, 'end_in_source_text': plag.end,
                                      'plag_mode': plag_mode.value})
 
@@ -356,19 +352,14 @@ class PlagCreator:
                 for info in plag_infos:
                     plag_infos_str += info + "\n"
 
-                if(number_of_plags_per_text == 0):
+                if (number_of_plags_per_text == 0):
                     plag_infos_str += "target_text_length: " + target_text_length
 
                 print(plag_infos_str)
 
-
-
-                print("target_text:\n" +target_text)
+                print("target_text:\n" + target_text)
                 print("\n")
 
-                # create output_dir if not existing
-                if not os.path.exists(output_dir):
-                    os.makedirs(output_dir)
                 # write text to file
                 output_file_name = output_dir + "/plag" + str(plag_ID) + ".txt"
                 output_file = open(output_file_name, "w")
@@ -382,7 +373,6 @@ class PlagCreator:
                 output_file.close()
 
                 plag_ID += 1
-
 
 
 # measure execution time
