@@ -9,4 +9,4 @@ Tool for generate plagiarisms for testing. By default stores the generated plagi
 2. python PlagCreator.py
 
 
-Tested on Windows 10 with python 3.5.2
+21-10-2017 Tested on Windows 10 with python 3.5.2
