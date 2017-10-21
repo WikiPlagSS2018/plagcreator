@@ -1,7 +1,8 @@
 # plagcreator
 Tool for generate plagiarisms for testing. By default stores the generated plagiarisms in the ./plag directory.
 
-### Requires: python3
+### Requires:
+- python3
 
 ### Install and run:
 1. git clone https://github.com/WikiplagWS17/plagcreator
