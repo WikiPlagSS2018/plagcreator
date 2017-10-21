@@ -1,6 +1,7 @@
 import os
 import random
 import re
+import sys
 from enum import Enum
 import pickle
 import time
@@ -39,7 +40,7 @@ class PlagCreator:
         print("parsing wiki dump file...")
         source_file = "dump/clean_dump.txt"
 
-        text_file = open(source_file, "r")
+        text_file = open(source_file, "r",encoding="utf-8")
         wiki = text_file.read()  # whole file in a string
         text_file.close()
 
@@ -107,7 +108,7 @@ class PlagCreator:
 
         source_file = "wordlist/germanWords.txt"
 
-        text_file = open(source_file, "r")
+        text_file = open(source_file, "r",encoding="utf-8")
         words = text_file.read().splitlines()  # read lines of file to list
         text_file.close()
 
@@ -230,7 +231,7 @@ class PlagCreator:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        with open(output_dir + '/plag_infos.csv', 'w') as csvfile:
+        with open(output_dir + '/plag_infos.csv', 'w',encoding="utf-8") as csvfile:
             fieldnames = ['plag_ID', 'article_ID', 'start_in_source_text', 'end_in_source_text', 'plag_mode']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
@@ -355,14 +356,14 @@ class PlagCreator:
                 if (number_of_plags_per_text == 0):
                     plag_infos_str += "target_text_length: " + target_text_length
 
-                print(plag_infos_str)
+                print(plag_infos_str.encode("utf-8"))
 
-                print("target_text:\n" + target_text)
+                print("target_text:\n" + str(target_text.encode("utf-8")))
                 print("\n")
 
                 # write text to file
                 output_file_name = output_dir + "/plag" + str(plag_ID) + ".txt"
-                output_file = open(output_file_name, "w")
+                output_file = open(output_file_name, "w",encoding="utf-8")
                 output_file.write(target_text)
                 output_file.close()
 
