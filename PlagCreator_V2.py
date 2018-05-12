@@ -2,13 +2,13 @@ import urllib.request
 import random
 import re
 
+
 class PlagCreator:
     def __init__(self):
-        #get the base text, the plags are gonna be mixed with
+        # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text()
-        #get n articles out of the database, save in list of tuples (docid, text)
-        self.wiki_articles_plag = self.getWikiArticlesFromDB(2,1)
-
+        # get n articles out of the database, save in list of tuples (docid, text)
+        self.wiki_articles_plag = self.getWikiArticlesFromDB(2, 1)
 
     def createPlag(self, number_plags):
 
@@ -19,13 +19,13 @@ class PlagCreator:
             selections_from_base_text = list()
 
             for i in range(number_plags):
-                #index within the list, not the text
+                # index within the list, not the text
                 start = random.randint(0, len(indices_of_sentence_endings) - 20)
                 end = random.randint(start + 2, start + 10)
                 start_in_base_text = indices_of_sentence_endings[start]
                 end_in_base_text = indices_of_sentence_endings[end]
                 start_end_in_base_text.append((start_in_base_text, end_in_base_text))
-                selections_from_base_text.append(self.base_text[start_in_base_text + 2 : end_in_base_text + 1])
+                selections_from_base_text.append(self.base_text[start_in_base_text + 2: end_in_base_text + 1])
 
             return selections_from_base_text
 
@@ -34,10 +34,12 @@ class PlagCreator:
             plags = list()
 
             for article in self.wiki_articles_plag:
-                article = article[1]
-                indices_of_sentence_endings = [m.start() for m in re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article)]
-                indices_of_sentence_endings = list(filter(lambda x: re.match('[A-Z]', article[x + 2]) is not None or re.match('[A-Z]', article[x + 3]) is not None, indices_of_sentence_endings))
-
+                article_docid = article[0]
+                article_text = article[1]
+                indices_of_sentence_endings = [m.start() for m in re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article_text)]
+                indices_of_sentence_endings = list(filter(
+                    lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
+                        x + 3]) is not None, indices_of_sentence_endings))
 
                 start_plag_index_within_list = random.randint(0, len(indices_of_sentence_endings))
                 end_plag_index_within_list = start_plag_index_within_list + 1
@@ -45,24 +47,21 @@ class PlagCreator:
                 start_plag_index_within_article = indices_of_sentence_endings[start_plag_index_within_list] + 3
                 end_plag_index_within_article = indices_of_sentence_endings[end_plag_index_within_list]
 
-                plag = (start_plag_index_within_article, end_plag_index_within_article, article[start_plag_index_within_article:end_plag_index_within_article + 1])
+                plag = (start_plag_index_within_article, end_plag_index_within_article,
+                        article_text[start_plag_index_within_article:end_plag_index_within_article + 1])
 
-                plags.append((start_plag_index_within_article, end_plag_index_within_article, plag))
+                plags.append((article_docid, plag))
 
             return plags
 
-
         subset_from_base_text = get_subset_from_base_text(number_plags)
         get_plags_from_wiki_articles()
-
-
 
     def get_base_text(self):
         with open('base_text.txt') as f:
             base_text = f.read()
 
         return base_text
-
 
     def getWikiArticlesFromDB(self, number_plags, start_docid):
         original_wiki_texts = list()
@@ -76,10 +75,9 @@ class PlagCreator:
                 original_wiki_texts.append((start_docid, text))
             except:
                 pass
-            start_docid+=1
+            start_docid += 1
 
         return original_wiki_texts
-
 
     def text_generator_markov(self, min_length, max_length):
         '''
@@ -136,7 +134,8 @@ class PlagCreator:
                 db[key] = [w3]
         return (words, db)
 
+
 if __name__ == "__main__":
     pc = PlagCreator()
     pc.createPlag(10)
-    #pc.createPlag(10,1,1,1)
+    # pc.createPlag(10,1,1,1)
