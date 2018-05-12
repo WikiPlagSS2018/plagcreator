@@ -12,12 +12,12 @@ class PlagCreator:
 
     def createPlag(self, number_plags):
 
-        def get_subset_from_base_text(number_plags):
+        def get_subset_from_base_text(number_selections):
 
             indices_of_sentence_endings = [m.start() for m in re.finditer('\.', self.base_text)]
             selections_from_base_text = list()
 
-            for i in range(number_plags):
+            for i in range(number_selections):
                 # index within the list, not the text
                 start = random.randint(0, len(indices_of_sentence_endings) - 20)
                 end = random.randint(start + 2, start + 10)
@@ -53,7 +53,7 @@ class PlagCreator:
 
             return plags
 
-        subset_from_base_text = get_subset_from_base_text(number_plags)
+        subset_from_base_text = get_subset_from_base_text(number_plags * 10)
         plags_from_wiki_articles = get_plags_from_wiki_articles()
 
     def get_base_text(self):
@@ -136,5 +136,5 @@ class PlagCreator:
 
 if __name__ == "__main__":
     pc = PlagCreator()
-    pc.createPlag(10)
+    pc.createPlag(1)
     # pc.createPlag(10,1,1,1)
