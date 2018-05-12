@@ -10,7 +10,7 @@ class PlagCreator:
         # get n articles out of the database, save in list of tuples (docid, text)
         self.wiki_articles_plag = self.getWikiArticlesFromDB(2, 1)
 
-    def createPlag(self, number_plags):
+    def createPlagiarism(self, number_plags):
 
         def get_subset_from_base_text(number_selections):
 
@@ -136,5 +136,5 @@ class PlagCreator:
 
 if __name__ == "__main__":
     pc = PlagCreator()
-    pc.createPlag(1)
+    pc.createPlagiarism(1)
     # pc.createPlag(10,1,1,1)
