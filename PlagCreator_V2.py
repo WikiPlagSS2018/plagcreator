@@ -15,7 +15,6 @@ class PlagCreator:
         def get_subset_from_base_text(number_plags):
 
             indices_of_sentence_endings = [m.start() for m in re.finditer('\.', self.base_text)]
-            start_end_in_base_text = list()
             selections_from_base_text = list()
 
             for i in range(number_plags):
@@ -24,8 +23,8 @@ class PlagCreator:
                 end = random.randint(start + 2, start + 10)
                 start_in_base_text = indices_of_sentence_endings[start]
                 end_in_base_text = indices_of_sentence_endings[end]
-                start_end_in_base_text.append((start_in_base_text, end_in_base_text))
-                selections_from_base_text.append(self.base_text[start_in_base_text + 2: end_in_base_text + 1])
+                start_end_in_base_text = (start_in_base_text, end_in_base_text)
+                selections_from_base_text.append((start_end_in_base_text[0], start_end_in_base_text[1], self.base_text[start_in_base_text + 2: end_in_base_text + 1]))
 
             return selections_from_base_text
 
@@ -44,7 +43,7 @@ class PlagCreator:
                 start_plag_index_within_list = random.randint(0, len(indices_of_sentence_endings))
                 end_plag_index_within_list = start_plag_index_within_list + 1
 
-                start_plag_index_within_article = indices_of_sentence_endings[start_plag_index_within_list] + 3
+                start_plag_index_within_article = indices_of_sentence_endings[start_plag_index_within_list] + 3 # TODO: check index_out_of_bounds
                 end_plag_index_within_article = indices_of_sentence_endings[end_plag_index_within_list]
 
                 plag = (start_plag_index_within_article, end_plag_index_within_article,
@@ -55,7 +54,7 @@ class PlagCreator:
             return plags
 
         subset_from_base_text = get_subset_from_base_text(number_plags)
-        get_plags_from_wiki_articles()
+        plags_from_wiki_articles = get_plags_from_wiki_articles()
 
     def get_base_text(self):
         with open('base_text.txt') as f:
