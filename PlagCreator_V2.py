@@ -83,15 +83,12 @@ class PlagCreator:
             plags_pos_in_potential_plagiarism_text_list = list()
             plag_pos_in_potential_plagiarism_text_start = 0
             for part in potential_plagiarisms_mix:
-                if part[1]:  # meaning: if is_plag...
-                    potential_plagiarism_text += part[2][3] + ". "  # TODO: not too beautiful here
+                potential_plagiarism_text += part[2][3] + " "  # TODO: not too beautiful here (what about . ?)
+                if part[1]:  # meaning: save position if is_plag
                     plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start,
                                                                         plag_pos_in_potential_plagiarism_text_start +
                                                                         part[2][2]))
-                    plag_pos_in_potential_plagiarism_text_start += part[2][2]
-                else:
-                    potential_plagiarism_text += part[2][3] + " "  # TODO: not too beautiful here
-                    plag_pos_in_potential_plagiarism_text_start += part[2][2]
+                plag_pos_in_potential_plagiarism_text_start += part[2][2]
 
             return (plags_pos_in_potential_plagiarism_text_list, potential_plagiarism_text), sorted(
                 plags_from_wiki_articles, reverse=True)
@@ -131,5 +128,5 @@ class PlagCreator:
 
 if __name__ == "__main__":
     pc = PlagCreator()
-    plagiarism = pc.createPlagiarism(2, 3, 4, -1)
-    # print(plagiarism)
+    plagiarisms = pc.createPlagiarism(2, 3, 4, -1)
+    # print(plagiarisms)
