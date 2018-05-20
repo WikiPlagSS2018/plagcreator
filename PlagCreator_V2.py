@@ -144,14 +144,14 @@ class PlagCreator:
                + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found)
 
     def extractWikiIdsOfPlagiarism(self, plagiarism):
-        wiki_id_list_as_created = list()
+        wiki_ids_creation = list()
         plags_from_wiki_articles = plagiarism[1]
         for plag_from_wiki_articles in plags_from_wiki_articles:
-            wiki_id_list_as_created.append(plag_from_wiki_articles[0])
-        return wiki_id_list_as_created
+            wiki_ids_creation.append(plag_from_wiki_articles[0])
+        return wiki_ids_creation
 
     def extractWikiIdsOfAnalysisResponse(self, response):
-        wiki_id_list_analysis_res = list()
+        wiki_ids_res_analysis = list()
         list_of_plags = response['plags']
         wiki_excerpts = list()
         for list_of_plag in list_of_plags:
@@ -160,9 +160,9 @@ class PlagCreator:
         # flattens wiki_excerpts list:
         wiki_excerpts = [y for x in wiki_excerpts for y in x]
         for wiki_excerpt in wiki_excerpts:
-            wiki_id_list_analysis_res.append(wiki_excerpt['id'])
+            wiki_ids_res_analysis.append(wiki_excerpt['id'])
 
-        return wiki_id_list_analysis_res
+        return wiki_ids_res_analysis
 
 
 if __name__ == "__main__":
