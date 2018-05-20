@@ -1,7 +1,10 @@
+import os
 import urllib.request
 import random
 import re
 import copy
+import urllib.request
+import json
 
 
 class PlagCreator:
@@ -125,8 +128,45 @@ class PlagCreator:
 
         return original_wiki_texts
 
+    def getAnalysisResponseForPlagiarism(self, plagiarism):
+        url = 'http://localhost:8080/wikiplag/rest/analyse'
+        data = {"text": plagiarism[0][1]}
+        params_for_post = json.dumps(data).encode('utf8')
+        req_for_post = urllib.request.Request(url, data=params_for_post, headers={'content-type': 'application/json'})
+        response = urllib.request.urlopen(req_for_post)
+        return json.loads(response.read().decode('utf8'))
+
+    def compareCreatedAndFoundByAnalysisWikiIds(self, plagiarism):
+        result_created = "Wiki Id's used for plag creation: " + str(self.extractWikiIdsOfPlagiarism(plagiarism))
+        result_of_analysis = "Wiki Id's as result of analysis:  " \
+                             + str(self.extractWikiIdsOfAnalysisResponse(self.getAnalysisResponseForPlagiarism(plagiarism)))
+        return result_created + os.linesep + result_of_analysis
+
+    def extractWikiIdsOfPlagiarism(self, plagiarism):
+        wiki_id_list_as_created = list()
+        plags_from_wiki_articles = plagiarism[1]
+        for plag_from_wiki_articles in plags_from_wiki_articles:
+            wiki_id_list_as_created.append(plag_from_wiki_articles[0])
+        return wiki_id_list_as_created
+
+    def extractWikiIdsOfAnalysisResponse(self, response):
+        wiki_id_list_analysis_res = list()
+        list_of_plags = response['plags']
+        wiki_excerpts = list()
+        for list_of_plag in list_of_plags:
+            wiki_excerpts.append(list_of_plag['wiki_excerpts'])
+
+        # flattens wiki_excerpts list:
+        wiki_excerpts = [y for x in wiki_excerpts for y in x]
+        for wiki_excerpt in wiki_excerpts:
+            wiki_id_list_analysis_res.append(wiki_excerpt['id'])
+
+        return wiki_id_list_analysis_res
+
 
 if __name__ == "__main__":
     pc = PlagCreator()
-    plagiarisms = pc.createPlagiarism(2, 3, 4, -1)
+    plagiarisms = pc.createPlagiarism(1, 3, 4, -1)
     # print(plagiarisms)
+    # print()
+    # print(pc.compareCreatedAndFoundByAnalysisWikiIds(plagiarisms[0]))
