@@ -45,7 +45,7 @@ class PlagCreator:
 
             for article in wiki_articles_plag:
                 article_docid = article[0]
-                article_text = article[1].replace("\n", "")
+                article_text = article[1]
                 indices_of_sentence_endings = [m.start() for m in re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article_text)]
                 indices_of_sentence_endings = list(filter(
                     lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
@@ -108,7 +108,7 @@ class PlagCreator:
         with open('base_text.txt') as f:
             base_text = f.read()
 
-        return base_text.replace("\n", "")
+        return base_text
 
     def getWikiArticlesFromDB(self, number_plags, start_docid):
         original_wiki_texts = list()
