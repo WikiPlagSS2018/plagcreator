@@ -137,10 +137,12 @@ class PlagCreator:
         return json.loads(response.read().decode('utf8'))
 
     def compareCreatedAndFoundByAnalysisWikiIds(self, plagiarism):
-        result_created = "Wiki Id's used for plag creation: " + str(self.extractWikiIdsOfPlagiarism(plagiarism))
-        result_of_analysis = "Wiki Id's as result of analysis:  " \
-                             + str(self.extractWikiIdsOfAnalysisResponse(self.getAnalysisResponseForPlagiarism(plagiarism)))
-        return result_created + os.linesep + result_of_analysis
+        wiki_ids_creation = self.extractWikiIdsOfPlagiarism(plagiarism)
+        wiki_ids_res_analysis = self.extractWikiIdsOfAnalysisResponse(self.getAnalysisResponseForPlagiarism(plagiarism))
+        wiki_ids_not_found = [not_found for not_found in wiki_ids_creation if not_found not in wiki_ids_res_analysis]
+        return "Wiki Id's used for plag creation: " + str(wiki_ids_creation) + os.linesep \
+               + "Wiki Id's as result of analysis:  " + str(wiki_ids_res_analysis) + os.linesep \
+               + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found)
 
     def extractWikiIdsOfPlagiarism(self, plagiarism):
         wiki_id_list_as_created = list()
@@ -166,7 +168,7 @@ class PlagCreator:
 
 if __name__ == "__main__":
     pc = PlagCreator()
-    plagiarisms = pc.createPlagiarism(1, 3, 4, -1)
-    # print(plagiarisms)
-    # print()
-    # print(pc.compareCreatedAndFoundByAnalysisWikiIds(plagiarisms[0]))
+    plagiarisms = pc.createPlagiarism(3, 3, 2, -1)
+    for plagiarism in plagiarisms:
+        print(plagiarism)
+        print(pc.compareCreatedAndFoundByAnalysisWikiIds(plagiarism) + os.linesep)
