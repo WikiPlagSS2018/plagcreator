@@ -1,4 +1,5 @@
 import os
+import urllib.request
 import random
 import re
 import copy
@@ -10,6 +11,9 @@ class PlagCreator:
     def __init__(self):
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text()
+
+    #number_plagiarism: overall number of texts to be analyzed
+    #number_selections: overall number of
 
     def createPlagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
 
@@ -50,11 +54,13 @@ class PlagCreator:
                     lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
                         x + 3]) is not None, indices_of_sentence_endings))
 
-                start_plag_index_within_list = random.randint(0, len(indices_of_sentence_endings))
+                #select random sentence ending but not the last one
+                start_plag_index_within_list = random.randint(0, (len(indices_of_sentence_endings) -1))
                 end_plag_index_within_list = start_plag_index_within_list + 1
 
+                #get the first character of the sentence following the previously selected sentence ending
                 start_plag_index_within_article = indices_of_sentence_endings[
-                                                      start_plag_index_within_list] + 3  # TODO: check index_out_of_bounds
+                                                      start_plag_index_within_list] + 3  # TODO: check index_out_of_bounds --> should not happen anymore
                 end_plag_index_within_article = indices_of_sentence_endings[end_plag_index_within_list]
                 length_of_plag = end_plag_index_within_article - start_plag_index_within_article + 1
 
@@ -145,6 +151,7 @@ class PlagCreator:
 
     def getAnalysisResponseForPlagiarism(self, plagiarism):
         url = 'http://localhost:8080/wikiplag/rest/analyse'
+        #url = 'http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse' #doesn't work yet
         data = {"text": plagiarism[0][1]}
         params_for_post = json.dumps(data).encode('utf8')
         req_for_post = urllib.request.Request(url, data=params_for_post, headers={'content-type': 'application/json'})
