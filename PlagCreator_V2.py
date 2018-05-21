@@ -66,34 +66,50 @@ class PlagCreator:
             return plags
 
         def create_potential_plagiarism(subset_from_base_text, plags_from_wiki_articles):
-            # TODO: what to do if number_plags > number_selections + 1 (meaning: much more plag than self-made)???
 
-            # compute insertion positions for plags randomly (and begin fill in at end later on)
-            insert_pos_list = sorted(random.sample(range(0, number_selections + 1), number_plags), reverse=True)
+            def create_potential_plagiarism_mix():
+                fill_in_set, set_to_fill_in = get_fill_in_set_first()
+                insert_pos_list = compute_insertion_positions()
+                potential_plagiarism_mix = copy.copy(fill_in_set)
+                pos_index_in_pot_plagiarisms_mix = 0
+                for insert_pos in insert_pos_list:
+                    potential_plagiarism_mix.insert(insert_pos,
+                                                    set_to_fill_in[pos_index_in_pot_plagiarisms_mix])
+                    pos_index_in_pot_plagiarisms_mix += 1
 
-            # copy to don't tamper with original subset_from_base_text
-            potential_plagiarisms_mix = copy.copy(subset_from_base_text)
-            # potential_plagiarisms_mix should contain subset_from_base_text and plags of plags_from_wiki_articles
-            plags_pos_index_in_pot_plagiarisms_mix = 0
-            for insert_pos in insert_pos_list:
-                potential_plagiarisms_mix.insert(insert_pos,
-                                                 plags_from_wiki_articles[plags_pos_index_in_pot_plagiarisms_mix])
-                plags_pos_index_in_pot_plagiarisms_mix += 1
+                return potential_plagiarism_mix
 
-            # finally: create potential_plagiarism_text and a list of start-end-tuples of plags inside of it
-            potential_plagiarism_text = ""
-            plags_pos_in_potential_plagiarism_text_list = list()
-            plag_pos_in_potential_plagiarism_text_start = 0
-            for part in potential_plagiarisms_mix:
-                potential_plagiarism_text += part[2][3] + " "  # TODO: not too beautiful here (what about . ?)
-                if part[1]:  # meaning: save position if is_plag
-                    plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start,
-                                                                        plag_pos_in_potential_plagiarism_text_start +
-                                                                        part[2][2]))
-                plag_pos_in_potential_plagiarism_text_start += part[2][2]
+            def create_plagiarism_text_and_store_plag_positions(potential_plagiarism_mix):
+                potential_plagiarism_text = ""
+                plags_pos_in_potential_plagiarism_text_list = list()
+                plag_pos_in_potential_plagiarism_text_start = 0
+                for part in potential_plagiarism_mix:
+                    potential_plagiarism_text += part[2][3] + " "  # TODO: not too beautiful here (what about . ?)
+                    if part[1]:  # meaning: save position if is_plag
+                        plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start,
+                                                                            plag_pos_in_potential_plagiarism_text_start +
+                                                                            part[2][2]))
+                    plag_pos_in_potential_plagiarism_text_start += part[2][2]
 
-            return (plags_pos_in_potential_plagiarism_text_list, potential_plagiarism_text), sorted(
-                plags_from_wiki_articles, reverse=True)
+                return plags_pos_in_potential_plagiarism_text_list, potential_plagiarism_text
+
+            def compute_insertion_positions():
+                if enough_selections_for_plags():
+                    return sorted(random.sample(range(0, number_selections + 1), number_plags), reverse=True)
+                else:
+                    return sorted(random.sample(range(0, number_plags + 1), number_selections), reverse=True)
+
+            def get_fill_in_set_first():
+                if enough_selections_for_plags():
+                    return subset_from_base_text, plags_from_wiki_articles
+                else:
+                    return plags_from_wiki_articles, subset_from_base_text
+
+            def enough_selections_for_plags():
+                return number_plags <= number_selections + 1
+
+            return create_plagiarism_text_and_store_plag_positions(create_potential_plagiarism_mix()), \
+                   sorted(plags_from_wiki_articles, reverse=enough_selections_for_plags())
 
         # compute list of potential_plagiarisms
         potential_plagiarisms = list()
@@ -167,7 +183,7 @@ class PlagCreator:
 
 if __name__ == "__main__":
     pc = PlagCreator()
-    plagiarisms = pc.createPlagiarism(3, 3, 2, -1)
+    plagiarisms = pc.createPlagiarism(1, 2, 4, -1)
     for plagiarism in plagiarisms:
         print(plagiarism)
         print(pc.compareCreatedAndFoundByAnalysisWikiIds(plagiarism) + os.linesep)
