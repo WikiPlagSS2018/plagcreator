@@ -3,8 +3,8 @@ import urllib.request
 import random
 import re
 import copy
-import urllib.request
 import json
+import numpy as np
 
 
 class PlagCreator:
@@ -43,7 +43,24 @@ class PlagCreator:
         def get_plags_from_wiki_articles():
 
             plags = list()
-            wiki_articles_plag = self.getWikiArticlesFromDB(number_plags, start_docid_plags)
+
+            #check for wiki articles that are too small (<5 sentences)
+            is_there_a_small_sentence_list = True
+            while is_there_a_small_sentence_list:
+                wiki_articles_plag = self.getWikiArticlesFromDB(number_plags, start_docid_plags)
+                length_list = np.array([])
+                for article in wiki_articles_plag:
+                    article_text = article[1]
+                    indices_of_sentence_endings = [m.start() for m in re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article_text)]
+                    indices_of_sentence_endings = list(filter(
+                        lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
+                            x + 3]) is not None, indices_of_sentence_endings))
+                    length_list = np.append(length_list,len(indices_of_sentence_endings))
+                if len(length_list[np.where(length_list < 5)]) > 0:
+                    is_there_a_small_sentence_list = True
+                else:
+                    is_there_a_small_sentence_list = False
+
             is_plag = True
 
             for article in wiki_articles_plag:
@@ -55,7 +72,7 @@ class PlagCreator:
                         x + 3]) is not None, indices_of_sentence_endings))
 
                 #select random sentence ending but not the last one
-                start_plag_index_within_list = random.randint(0, (len(indices_of_sentence_endings) -1))
+                start_plag_index_within_list = random.randint(0, (len(indices_of_sentence_endings) -2))
                 end_plag_index_within_list = start_plag_index_within_list + 1
 
                 #get the first character of the sentence following the previously selected sentence ending
