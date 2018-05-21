@@ -74,13 +74,13 @@ class PlagCreator:
         def create_potential_plagiarism(subset_from_base_text, plags_from_wiki_articles):
 
             def create_potential_plagiarism_mix():
-                fill_in_set, set_to_fill_in = get_fill_in_set_first()
+                fill_into_set, set_with_fill_ins = get_fill_into_set_first()
                 insert_pos_list = compute_insertion_positions()
-                potential_plagiarism_mix = copy.copy(fill_in_set)
+                potential_plagiarism_mix = copy.copy(fill_into_set)
                 pos_index_in_pot_plagiarisms_mix = 0
                 for insert_pos in insert_pos_list:
                     potential_plagiarism_mix.insert(insert_pos,
-                                                    set_to_fill_in[pos_index_in_pot_plagiarisms_mix])
+                                                    set_with_fill_ins[pos_index_in_pot_plagiarisms_mix])
                     pos_index_in_pot_plagiarisms_mix += 1
 
                 return potential_plagiarism_mix
@@ -105,7 +105,7 @@ class PlagCreator:
                 else:
                     return sorted(random.sample(range(0, number_plags + 1), number_selections), reverse=True)
 
-            def get_fill_in_set_first():
+            def get_fill_into_set_first():
                 if enough_selections_for_plags():
                     return subset_from_base_text, plags_from_wiki_articles
                 else:
