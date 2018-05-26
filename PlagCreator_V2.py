@@ -181,22 +181,6 @@ class PlagCreator:
     def compareCreatedAndFoundByAnalysisValues(self, plagiarism):
         analysis_response = self.getAnalysisResponseForPlagiarism(plagiarism)
 
-        def compareCreatedAndFoundByAnalysisPlagPositionsInInputText():
-            plag_position_in_input_text_ground_truth = self.extract_plag_position_in_input_text_ground_truth(plagiarism)
-            plag_position_in_input_text_analysis_response = self.extract_plag_position_in_input_text_analysis_response(
-                analysis_response)
-            plag_position_in_input_text_comparison = ""
-
-            for plag_pos_input in plag_position_in_input_text_ground_truth:
-                plag_position_in_input_text_comparison = plag_position_in_input_text_comparison + "Positions in input text ground truth:\t\t" + str(
-                    plag_pos_input) + os.linesep
-                for plag_pos_input_analysis_resp in plag_position_in_input_text_analysis_response:
-                    if plag_pos_input_analysis_resp[0] == plag_pos_input[0]:
-                        plag_position_in_input_text_comparison = plag_position_in_input_text_comparison + "Positions in input text analysis response:\t" + str(
-                            plag_pos_input_analysis_resp) + os.linesep
-
-            return plag_position_in_input_text_comparison
-
         def compareCreatedAndFoundByAnalysisWikiIds():
             wiki_ids_res_analysis = self.extractInfoOfWikiexcerptInAnalysisResponse(analysis_response, ["id"])
             wiki_ids_creation = self.extractWikiIdsOfPlagiarism(plagiarism)
@@ -205,22 +189,35 @@ class PlagCreator:
 
             return "Wiki Id's used for plag creation: " + str(wiki_ids_creation) + os.linesep \
                    + "Wiki Id's as result of analysis:  " + str(wiki_ids_res_analysis) + os.linesep \
-                   + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found) + os.linesep \
+                   + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found) + os.linesep
+
+        def compareCreatedAndFoundByAnalysisPlagPositionsInInputText():
+            plag_position_in_input_text_ground_truth = self.extract_plag_position_in_input_text_ground_truth(plagiarism)
+            plag_position_in_input_text_analysis_response = self.extract_plag_position_in_input_text_analysis_response(
+                analysis_response)
+            return comparisonResponseStringBuilder(plag_position_in_input_text_ground_truth,
+                                                   plag_position_in_input_text_analysis_response, "input")
 
         def compareCreatedAndFoundByAnalysisPlagPositionsInWikiText():
-            plag_position_in_wikipedia_text_ground_truth = self.extract_plag_position_in_wiki_article_ground_truth(plagiarism)
-            plag_position_in_wikipedia_text_analysis_response = self.extract_plag_position_in_wikipedia_text_analysis_response(analysis_response)
-            plag_position_in_wikipedia_text_comparison = ""
+            plag_position_in_wikipedia_text_ground_truth = self.extract_plag_position_in_wiki_article_ground_truth(
+                plagiarism)
+            plag_position_in_wikipedia_text_analysis_response = \
+                self.extract_plag_position_in_wikipedia_text_analysis_response(analysis_response)
+            return comparisonResponseStringBuilder(plag_position_in_wikipedia_text_ground_truth,
+                                                   plag_position_in_wikipedia_text_analysis_response, "wikipedia")
 
-            for plag_pos_input in plag_position_in_wikipedia_text_ground_truth:
-                plag_position_in_wikipedia_text_comparison = plag_position_in_wikipedia_text_comparison + "Positions in wikipedia text ground truth:\t\t" + str(
-                    plag_pos_input) + os.linesep
-                for plag_pos_input_analysis_resp in plag_position_in_wikipedia_text_analysis_response:
+        def comparisonResponseStringBuilder(plag_position_ground_truth, plag_position_analysis_response, descriptor):
+            plag_position_in_comparison = ""
+
+            for plag_pos_input in plag_position_ground_truth:
+                plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
+                                              + " text ground truth:\t\t" + str(plag_pos_input) + os.linesep
+                for plag_pos_input_analysis_resp in plag_position_analysis_response:
                     if plag_pos_input_analysis_resp[0] == plag_pos_input[0]:
-                        plag_position_in_wikipedia_text_comparison = plag_position_in_wikipedia_text_comparison + "Positions in wikipedia text analysis response:\t" + str(
-                            plag_pos_input_analysis_resp) + os.linesep
-
-            return plag_position_in_wikipedia_text_comparison
+                        plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
+                                                      + " text analysis response:\t" + str(plag_pos_input_analysis_resp) \
+                                                      + os.linesep
+            return plag_position_in_comparison
 
         return compareCreatedAndFoundByAnalysisWikiIds() + os.linesep + \
                compareCreatedAndFoundByAnalysisPlagPositionsInInputText() + os.linesep + \
