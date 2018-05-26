@@ -10,7 +10,7 @@ import numpy as np
 class PlagCreator:
     def __init__(self):
         # get the base text, the plags are gonna be mixed with
-        self.base_text = self.get_base_text()
+        self.base_text = self.get_base_text().replace("\n","")
 
     #number_plagiarism: overall number of texts to be analyzed
     #number_selections: overall number of
