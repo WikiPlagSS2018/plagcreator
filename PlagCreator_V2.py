@@ -11,9 +11,11 @@ class PlagCreator:
     def __init__(self):
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n","")
+        self.base_url = "http://localhost:8080/wikiplag/rest"
+        # 'http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest'
 
-    #number_plagiarism: overall number of texts to be analyzed
-    #number_selections: overall number of
+    # number_plagiarism: overall number of texts to be analyzed
+    # number_selections: overall number of
 
     def createPlagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
 
@@ -159,7 +161,7 @@ class PlagCreator:
 
         while len(original_wiki_texts) < number_plags:
             try:
-                resource = urllib.request.urlopen("http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/documents/" + str(start_docid))
+                resource = urllib.request.urlopen(self.base_url + "/documents/" + str(start_docid))
                 text = resource.read().decode('utf-8')
                 original_wiki_texts.append((start_docid, text))
             except:
@@ -169,8 +171,7 @@ class PlagCreator:
         return original_wiki_texts
 
     def getAnalysisResponseForPlagiarism(self, plagiarism):
-        #url = 'http://localhost:8080/wikiplag/rest/analyse'
-        url = 'http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse'
+        url = self.base_url + "/analyse"
         data = {"text": plagiarism[0][1]}
         params_for_post = json.dumps(data).encode('utf8')
         req_for_post = urllib.request.Request(url, data=params_for_post, headers={'content-type': 'application/json'})
