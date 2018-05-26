@@ -8,11 +8,10 @@ import numpy as np
 
 
 class PlagCreator:
-    def __init__(self):
+    def __init__(self, host="localhost"):
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
-        self.base_url = "http://localhost:8080/wikiplag/rest"
-        # self.base_url = "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest"
+        self.base_url = "http://" + host + ":8080/wikiplag/rest"
 
     # number_plagiarism: overall number of texts to be analyzed
     # number_selections: overall number of
@@ -293,7 +292,7 @@ class PlagCreator:
 
 
 if __name__ == "__main__":
-    pc = PlagCreator()
+    pc = PlagCreator()  # Default is localhost. You may want to choose parameter: "wikiplag.f4.htw-berlin.de"
     plagiarisms = pc.createPlagiarism(1, 2, 4, -1)
     for plagiarism in plagiarisms:
         print(plagiarism)
