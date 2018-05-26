@@ -109,12 +109,12 @@ class PlagCreator:
                 plags_pos_in_potential_plagiarism_text_list = list()
                 plag_pos_in_potential_plagiarism_text_start = 0
                 for part in potential_plagiarism_mix:
-                    potential_plagiarism_text += part[2][3] + " "  # TODO: not too beautiful here (what about . ?)
+                    potential_plagiarism_text += part[2][3] + " "
                     if part[1]:  # meaning: save position if is_plag
                         plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start,
-                                                                            plag_pos_in_potential_plagiarism_text_start +
-                                                                            part[2][2]))
-                    plag_pos_in_potential_plagiarism_text_start += part[2][2]
+                                                                            plag_pos_in_potential_plagiarism_text_start
+                                                                            + part[2][2] + 1))
+                    plag_pos_in_potential_plagiarism_text_start += part[2][2] + 1
 
                 return plags_pos_in_potential_plagiarism_text_list, potential_plagiarism_text
 
