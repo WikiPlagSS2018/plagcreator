@@ -198,7 +198,7 @@ class PlagCreator:
             return plag_position_in_input_text_comparison
 
         def compareCreatedAndFoundByAnalysisWikiIds():
-            wiki_ids_res_analysis = self.extractWikiIdsOfAnalysisResponse(analysis_response)
+            wiki_ids_res_analysis = self.extractInfoOfWikiexcerptInAnalysisResponse(analysis_response, ["id"])
             wiki_ids_creation = self.extractWikiIdsOfPlagiarism(plagiarism)
             wiki_ids_not_found = [not_found for not_found in wiki_ids_creation if
                                   not_found not in wiki_ids_res_analysis]
@@ -233,8 +233,8 @@ class PlagCreator:
             wiki_ids_creation.append(plag_from_wiki_articles[0])
         return wiki_ids_creation
 
-    def extractWikiIdsOfAnalysisResponse(self, response):
-        wiki_ids_res_analysis = list()
+    def extractInfoOfWikiexcerptInAnalysisResponse(self, response, fields_of_interest):
+        computed_responses = list()
         list_of_plags = response['plags']
         wiki_excerpts = list()
         for list_of_plag in list_of_plags:
@@ -243,9 +243,15 @@ class PlagCreator:
         # flattens wiki_excerpts list:
         wiki_excerpts = [y for x in wiki_excerpts for y in x]
         for wiki_excerpt in wiki_excerpts:
-            wiki_ids_res_analysis.append(wiki_excerpt['id'])
+            if len(fields_of_interest) == 1:
+                computed_responses.append(wiki_excerpt[fields_of_interest[0]])
+            elif len(fields_of_interest) == 3:
+                computed_responses.append((wiki_excerpt[fields_of_interest[0]],
+                                           (wiki_excerpt[fields_of_interest[1]], wiki_excerpt[fields_of_interest[2]])))
+            else:
+                raise IndexError('List has to be of length one or three.')
 
-        return wiki_ids_res_analysis
+        return computed_responses
 
     def extract_plag_position_in_input_text_ground_truth(self, plagiarisms):
         article_id_and_position_in_plag = list()
@@ -260,35 +266,11 @@ class PlagCreator:
         return article_id_and_position_in_wiki_article
 
     def extract_plag_position_in_input_text_analysis_response(self, response):
-        wiki_ids_pos_in_input_text_res_analysis = list()
-        list_of_plags = response['plags']
-        wiki_excerpts = list()
-        for list_of_plag in list_of_plags:
-            wiki_excerpts.append(list_of_plag['wiki_excerpts'])
-
-        # flattens wiki_excerpts list:
-        wiki_excerpts = [y for x in wiki_excerpts for y in x]
-        for wiki_excerpt in wiki_excerpts:
-            wiki_ids_pos_in_input_text_res_analysis.append(
-                (wiki_excerpt['id'], (wiki_excerpt['start'], wiki_excerpt['end'])))
-
-        return wiki_ids_pos_in_input_text_res_analysis
+        return self.extractInfoOfWikiexcerptInAnalysisResponse(response, ['id', 'start', 'end'])
 
     def extract_plag_position_in_wikipedia_text_analysis_response(self, response):
-        wiki_ids_pos_in_wikipedia_text_res_analysis = list()
-        list_of_plags = response['plags']
-        wiki_excerpts = list()
-        for list_of_plag in list_of_plags:
-            wiki_excerpts.append(list_of_plag['wiki_excerpts'])
-
-        # flattens wiki_excerpts list:
-        wiki_excerpts = [y for x in wiki_excerpts for y in x]
-        for wiki_excerpt in wiki_excerpts:
-            wiki_ids_pos_in_wikipedia_text_res_analysis.append(
-                (wiki_excerpt['id'], (wiki_excerpt['start_of_plag_in_wiki'],
-                                      wiki_excerpt['end_of_plag_in_wiki'])))
-
-        return wiki_ids_pos_in_wikipedia_text_res_analysis
+        return self.extractInfoOfWikiexcerptInAnalysisResponse(response,
+                                                               ['id', 'start_of_plag_in_wiki', 'end_of_plag_in_wiki'])
 
 
 if __name__ == "__main__":
