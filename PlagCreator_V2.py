@@ -12,7 +12,7 @@ class PlagCreator:
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
         self.base_url = "http://localhost:8080/wikiplag/rest"
-        # 'http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest'
+        # self.base_url = "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest"
 
     # number_plagiarism: overall number of texts to be analyzed
     # number_selections: overall number of
@@ -208,8 +208,24 @@ class PlagCreator:
                    + "Wiki Id's as result of analysis:  " + str(wiki_ids_res_analysis) + os.linesep \
                    + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found) + os.linesep \
 
-        return compareCreatedAndFoundByAnalysisWikiIds() + \
-               compareCreatedAndFoundByAnalysisPlagPositionsInInputText()
+        def compareCreatedAndFoundByAnalysisPlagPositionsInWikiText():
+            plag_position_in_wikipedia_text_ground_truth = self.extract_plag_position_in_wiki_article_ground_truth(plagiarism)
+            plag_position_in_wikipedia_text_analysis_response = self.extract_plag_position_in_wikipedia_text_analysis_response(analysis_response)
+            plag_position_in_wikipedia_text_comparison = ""
+
+            for plag_pos_input in plag_position_in_wikipedia_text_ground_truth:
+                plag_position_in_wikipedia_text_comparison = plag_position_in_wikipedia_text_comparison + "Positions in wikipedia text ground truth:\t\t" + str(
+                    plag_pos_input) + os.linesep
+                for plag_pos_input_analysis_resp in plag_position_in_wikipedia_text_analysis_response:
+                    if plag_pos_input_analysis_resp[0] == plag_pos_input[0]:
+                        plag_position_in_wikipedia_text_comparison = plag_position_in_wikipedia_text_comparison + "Positions in wikipedia text analysis response:\t" + str(
+                            plag_pos_input_analysis_resp) + os.linesep
+
+            return plag_position_in_wikipedia_text_comparison
+
+        return compareCreatedAndFoundByAnalysisWikiIds() + os.linesep + \
+               compareCreatedAndFoundByAnalysisPlagPositionsInInputText() + os.linesep + \
+               compareCreatedAndFoundByAnalysisPlagPositionsInWikiText()
 
     def extractWikiIdsOfPlagiarism(self, plagiarism):
         wiki_ids_creation = list()
@@ -258,6 +274,22 @@ class PlagCreator:
                 (wiki_excerpt['id'], (wiki_excerpt['start'], wiki_excerpt['end'])))
 
         return wiki_ids_pos_in_input_text_res_analysis
+
+    def extract_plag_position_in_wikipedia_text_analysis_response(self, response):
+        wiki_ids_pos_in_wikipedia_text_res_analysis = list()
+        list_of_plags = response['plags']
+        wiki_excerpts = list()
+        for list_of_plag in list_of_plags:
+            wiki_excerpts.append(list_of_plag['wiki_excerpts'])
+
+        # flattens wiki_excerpts list:
+        wiki_excerpts = [y for x in wiki_excerpts for y in x]
+        for wiki_excerpt in wiki_excerpts:
+            wiki_ids_pos_in_wikipedia_text_res_analysis.append(
+                (wiki_excerpt['id'], (wiki_excerpt['start_of_plag_in_wiki'],
+                                      wiki_excerpt['end_of_plag_in_wiki'])))
+
+        return wiki_ids_pos_in_wikipedia_text_res_analysis
 
 
 if __name__ == "__main__":
