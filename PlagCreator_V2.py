@@ -17,15 +17,14 @@ class PlagCreator:
     # number_plagiarism: overall number of texts to be analyzed
     # number_selections: overall number of
 
-    def createPlagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
+    def create_plagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
 
         def get_subset_from_base_text():
-
             indices_of_sentence_endings = [m.start() for m in re.finditer('\.', self.base_text)]
             selections_from_base_text = list()
             is_plag = False
 
-            for i in range(number_selections):
+            for selection_number in range(number_selections):
                 # index within the list, not the text
                 start = random.randint(0, len(indices_of_sentence_endings) - 20)
                 end = random.randint(start + 2, start + 10)
@@ -33,7 +32,7 @@ class PlagCreator:
                 end_in_base_text = indices_of_sentence_endings[end]
                 start_end_in_base_text = (start_in_base_text, end_in_base_text)
                 length_of_selection = len(self.base_text[start_in_base_text + 2: end_in_base_text + 1])
-                selection_id = i + 1
+                selection_id = selection_number + 1
                 selections_from_base_text.append(
                     (selection_id, is_plag, (start_end_in_base_text[0], start_end_in_base_text[1],
                                              length_of_selection,
@@ -43,13 +42,13 @@ class PlagCreator:
             return selections_from_base_text
 
         def get_plags_from_wiki_articles():
-
             plags = list()
 
             # check for wiki articles that are too small (<5 sentences)
             is_there_a_small_sentence_list = True
+            wiki_articles_plag = list()
             while is_there_a_small_sentence_list:
-                wiki_articles_plag = self.getWikiArticlesFromDB(number_plags, start_docid_plags)
+                wiki_articles_plag = self.get_wiki_articles_from_db(number_plags, start_docid_plags)
                 length_list = np.array([])
                 for article in wiki_articles_plag:
                     article_text = article[1]
@@ -83,7 +82,8 @@ class PlagCreator:
                                                       start_plag_index_within_list] + 3
                 end_plag_index_within_article = indices_of_sentence_endings[end_plag_index_within_list] + 1
 
-                # due to the sentence split, punctuation is lost, which is a problem for position determination, therefore a dot is appended to wiki excerpt
+                # due to the sentence split, punctuation is lost, which is a problem for position determination,
+                # therefore a dot is appended to wiki excerpt
                 plag_excerpt = article_text[start_plag_index_within_article:end_plag_index_within_article] + "."
                 length_of_plag = len(plag_excerpt)
 
@@ -116,8 +116,11 @@ class PlagCreator:
                 for part in potential_plagiarism_mix:
                     potential_plagiarism_text += part[2][3] + " "
                     if part[1]:  # meaning: save position if is_plag
-                        correction_amount = correct_position_in_potential_plagiarism_text_depending_on_previous_sentence_length(potential_plagiarism_mix, part_index)
-                        plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start - correction_amount,
+                        correction_amount = \
+                            correct_position_in_potential_plagiarism_text_depending_on_previous_sentence_length(
+                                potential_plagiarism_mix, part_index)
+                        plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start
+                                                                            - correction_amount,
                                                                             plag_pos_in_potential_plagiarism_text_start
                                                                             + part[2][2] + 1))
                     plag_pos_in_potential_plagiarism_text_start += part[2][2] + 1
@@ -125,11 +128,12 @@ class PlagCreator:
 
                 return plags_pos_in_potential_plagiarism_text_list, potential_plagiarism_text
 
-            def correct_position_in_potential_plagiarism_text_depending_on_previous_sentence_length(potential_plagiarism_mix, part_index):
+            def correct_position_in_potential_plagiarism_text_depending_on_previous_sentence_length(
+                    potential_plagiarism_mix, part_index):
                 if part_index == 0:
                     return 0
                 else:
-                    #get the text of the previous part
+                    # get the text of the previous part
                     text = potential_plagiarism_mix[part_index-1][2][3]
                     sentence_list = re.split('\. |, |\? |! ', text)
                     last_sentence = sentence_list[-1]
@@ -153,8 +157,8 @@ class PlagCreator:
             def enough_selections_for_plags():
                 return number_plags <= number_selections + 1
 
-            return create_plagiarism_text_and_store_plag_positions(create_potential_plagiarism_mix()), \
-                   sorted(plags_from_wiki_articles, reverse=enough_selections_for_plags())
+            return create_plagiarism_text_and_store_plag_positions(create_potential_plagiarism_mix()), sorted(
+                plags_from_wiki_articles, reverse=enough_selections_for_plags())
 
         # compute list of potential_plagiarisms
         potential_plagiarisms = list()
@@ -164,13 +168,14 @@ class PlagCreator:
 
         return potential_plagiarisms
 
-    def get_base_text(self):
+    @staticmethod
+    def get_base_text():
         with open('base_text.txt') as f:
             base_text = f.read()
 
         return base_text
 
-    def getWikiArticlesFromDB(self, number_plags, start_docid):
+    def get_wiki_articles_from_db(self, number_plags, start_docid):
         original_wiki_texts = list()
 
         # just for fun: choose random start_docid if negative value is given
@@ -188,20 +193,12 @@ class PlagCreator:
 
         return original_wiki_texts
 
-    def getAnalysisResponseForPlagiarism(self, plagiarism):
-        url = self.base_url + "/analyse"
-        data = {"text": plagiarism[0][1]}
-        params_for_post = json.dumps(data).encode('utf8')
-        req_for_post = urllib.request.Request(url, data=params_for_post, headers={'content-type': 'application/json'})
-        response = urllib.request.urlopen(req_for_post)
-        return json.loads(response.read().decode('utf8'))
+    def compare_created_and_found_by_analysis_values(self, plagiarism):
+        analysis_response = self.get_analysis_response_for_plagiarism(plagiarism)
 
-    def compareCreatedAndFoundByAnalysisValues(self, plagiarism):
-        analysis_response = self.getAnalysisResponseForPlagiarism(plagiarism)
-
-        def compareCreatedAndFoundByAnalysisWikiIds():
-            wiki_ids_res_analysis = self.extractInfoOfWikiexcerptInAnalysisResponse(analysis_response, ["id"])
-            wiki_ids_creation = self.extractWikiIdsOfPlagiarism(plagiarism)
+        def compare_created_and_found_by_analysis_wiki_ids():
+            wiki_ids_res_analysis = self.extract_info_of_wikiexcerpt_in_analysis_response(analysis_response, ["id"])
+            wiki_ids_creation = self.extract_wiki_ids_of_plagiarism(plagiarism)
             wiki_ids_not_found = [not_found for not_found in wiki_ids_creation if
                                   not_found not in wiki_ids_res_analysis]
 
@@ -209,22 +206,22 @@ class PlagCreator:
                    + "Wiki Id's as result of analysis:  " + str(wiki_ids_res_analysis) + os.linesep \
                    + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found) + os.linesep
 
-        def compareCreatedAndFoundByAnalysisPlagPositionsInInputText():
+        def compare_created_and_found_by_analysis_plag_positions_in_input_text():
             plag_position_in_input_text_ground_truth = self.extract_plag_position_in_input_text_ground_truth(plagiarism)
             plag_position_in_input_text_analysis_response = self.extract_plag_position_in_input_text_analysis_response(
                 analysis_response)
-            return comparisonResponseStringBuilder(plag_position_in_input_text_ground_truth,
-                                                   plag_position_in_input_text_analysis_response, "input")
+            return comparison_response_string_builder(plag_position_in_input_text_ground_truth,
+                                                      plag_position_in_input_text_analysis_response, "input")
 
-        def compareCreatedAndFoundByAnalysisPlagPositionsInWikiText():
+        def compare_created_and_found_by_analysis_plag_positions_in_wiki_text():
             plag_position_in_wikipedia_text_ground_truth = self.extract_plag_position_in_wiki_article_ground_truth(
                 plagiarism)
             plag_position_in_wikipedia_text_analysis_response = \
                 self.extract_plag_position_in_wikipedia_text_analysis_response(analysis_response)
-            return comparisonResponseStringBuilder(plag_position_in_wikipedia_text_ground_truth,
-                                                   plag_position_in_wikipedia_text_analysis_response, "wikipedia")
+            return comparison_response_string_builder(plag_position_in_wikipedia_text_ground_truth,
+                                                      plag_position_in_wikipedia_text_analysis_response, "wikipedia")
 
-        def comparisonResponseStringBuilder(plag_position_ground_truth, plag_position_analysis_response, descriptor):
+        def comparison_response_string_builder(plag_position_ground_truth, plag_position_analysis_response, descriptor):
             plag_position_in_comparison = ""
             for plag_pos_input in plag_position_ground_truth:
                 for plag_pos_input_analysis_resp in plag_position_analysis_response:
@@ -236,18 +233,49 @@ class PlagCreator:
                                                       + os.linesep
             return plag_position_in_comparison
 
-        return compareCreatedAndFoundByAnalysisWikiIds() + os.linesep + \
-               compareCreatedAndFoundByAnalysisPlagPositionsInInputText() + os.linesep + \
-               compareCreatedAndFoundByAnalysisPlagPositionsInWikiText()
+        return compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
+               + compare_created_and_found_by_analysis_plag_positions_in_input_text() \
+               + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
 
-    def extractWikiIdsOfPlagiarism(self, plagiarism):
+    def get_analysis_response_for_plagiarism(self, plagiarism):
+        url = self.base_url + "/analyse"
+        data = {"text": plagiarism[0][1]}
+        params_for_post = json.dumps(data).encode('utf8')
+        req_for_post = urllib.request.Request(url, data=params_for_post, headers={'content-type': 'application/json'})
+        response = urllib.request.urlopen(req_for_post)
+        return json.loads(response.read().decode('utf8'))
+
+    @staticmethod
+    def extract_plag_position_in_input_text_ground_truth(plagiarisms):
+        article_id_and_position_in_plag = list()
+        for i in range(len(plagiarisms[0][0])):
+            article_id_and_position_in_plag.append((plagiarisms[1][i][0], plagiarisms[0][0][i]))
+        return article_id_and_position_in_plag
+
+    @staticmethod
+    def extract_plag_position_in_wiki_article_ground_truth(plagiarisms):
+        article_id_and_position_in_wiki_article = list()
+        for plag in plagiarisms[1]:
+            article_id_and_position_in_wiki_article.append((plag[0], (plag[2][0], plag[2][1])))
+        return article_id_and_position_in_wiki_article
+
+    @staticmethod
+    def extract_wiki_ids_of_plagiarism(plagiarism):
         wiki_ids_creation = list()
         plags_from_wiki_articles = plagiarism[1]
         for plag_from_wiki_articles in plags_from_wiki_articles:
             wiki_ids_creation.append(plag_from_wiki_articles[0])
         return wiki_ids_creation
 
-    def extractInfoOfWikiexcerptInAnalysisResponse(self, response, fields_of_interest):
+    def extract_plag_position_in_input_text_analysis_response(self, response):
+        return self.extract_info_of_wikiexcerpt_in_analysis_response(response, ['id', 'start', 'end'])
+
+    def extract_plag_position_in_wikipedia_text_analysis_response(self, response):
+        return self.extract_info_of_wikiexcerpt_in_analysis_response(
+            response, ['id', 'start_of_plag_in_wiki', 'end_of_plag_in_wiki'])
+
+    @staticmethod
+    def extract_info_of_wikiexcerpt_in_analysis_response(response, fields_of_interest):
         computed_responses = list()
         list_of_plags = response['plags']
         wiki_excerpts = list()
@@ -267,29 +295,10 @@ class PlagCreator:
 
         return computed_responses
 
-    def extract_plag_position_in_input_text_ground_truth(self, plagiarisms):
-        article_id_and_position_in_plag = list()
-        for i in range(len(plagiarisms[0][0])):
-            article_id_and_position_in_plag.append((plagiarisms[1][i][0], plagiarisms[0][0][i]))
-        return article_id_and_position_in_plag
-
-    def extract_plag_position_in_wiki_article_ground_truth(self, plagiarisms):
-        article_id_and_position_in_wiki_article = list()
-        for plag in plagiarisms[1]:
-            article_id_and_position_in_wiki_article.append((plag[0], (plag[2][0], plag[2][1])))
-        return article_id_and_position_in_wiki_article
-
-    def extract_plag_position_in_input_text_analysis_response(self, response):
-        return self.extractInfoOfWikiexcerptInAnalysisResponse(response, ['id', 'start', 'end'])
-
-    def extract_plag_position_in_wikipedia_text_analysis_response(self, response):
-        return self.extractInfoOfWikiexcerptInAnalysisResponse(response,
-                                                               ['id', 'start_of_plag_in_wiki', 'end_of_plag_in_wiki'])
-
 
 if __name__ == "__main__":
-    pc = PlagCreator()  # Default is localhost. You may want to choose parameter: "wikiplag.f4.htw-berlin.de"
-    plagiarisms = pc.createPlagiarism(1, 2, 4, -1)
-    for plagiarism in plagiarisms:
-        print(plagiarism)
-        print(pc.compareCreatedAndFoundByAnalysisValues(plagiarism) + os.linesep)
+    pc = PlagCreator()  # Default is "localhost". You may want to choose parameter: "wikiplag.f4.htw-berlin.de"
+    my_plagiarisms = pc.create_plagiarism(1, 20, 3, -1)
+    for my_plagiarism in my_plagiarisms:
+        print(my_plagiarism)
+        print(pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
