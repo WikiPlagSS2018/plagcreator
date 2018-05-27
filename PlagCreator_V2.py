@@ -68,7 +68,7 @@ class PlagCreator:
 
             for article in wiki_articles_plag:
                 article_docid = article[0]
-                article_text = article[1]
+                article_text = article[1].replace("\n", "")
                 indices_of_sentence_endings = [m.start() for m in re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article_text)]
                 indices_of_sentence_endings = list(filter(
                     lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
@@ -81,11 +81,10 @@ class PlagCreator:
                 # get the first character of the sentence following the previously selected sentence ending
                 start_plag_index_within_article = indices_of_sentence_endings[
                                                       start_plag_index_within_list] + 3
-                end_plag_index_within_article = indices_of_sentence_endings[end_plag_index_within_list]
+                end_plag_index_within_article = indices_of_sentence_endings[end_plag_index_within_list] + 1
 
                 # due to the sentence split, punctuation is lost, which is a problem for position determination, therefore a dot is appended to wiki excerpt
-                plag_excerpt = article_text[start_plag_index_within_article:end_plag_index_within_article + 1] + "."
-                plag_excerpt = plag_excerpt.replace("\n","")
+                plag_excerpt = article_text[start_plag_index_within_article:end_plag_index_within_article] + "."
                 length_of_plag = len(plag_excerpt)
 
                 plag = (start_plag_index_within_article, end_plag_index_within_article, length_of_plag,
