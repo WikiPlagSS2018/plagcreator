@@ -12,6 +12,7 @@ class PlagCreator:
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
         self.base_url = "http://" + host + ":8080/wikiplag/rest"
+        self.min_sentence_length_for_positioning = 12
 
     # number_plagiarism: overall number of texts to be analyzed
     # number_selections: overall number of
@@ -31,7 +32,7 @@ class PlagCreator:
                 start_in_base_text = indices_of_sentence_endings[start]
                 end_in_base_text = indices_of_sentence_endings[end]
                 start_end_in_base_text = (start_in_base_text, end_in_base_text)
-                length_of_selection = end_in_base_text - start_in_base_text + 1
+                length_of_selection = len(self.base_text[start_in_base_text + 2: end_in_base_text + 1])
                 selection_id = i + 1
                 selections_from_base_text.append(
                     (selection_id, is_plag, (start_end_in_base_text[0], start_end_in_base_text[1],
@@ -79,12 +80,14 @@ class PlagCreator:
 
                 # get the first character of the sentence following the previously selected sentence ending
                 start_plag_index_within_article = indices_of_sentence_endings[
-                                                      start_plag_index_within_list] + 3  # TODO: check index_out_of_bounds --> should not happen anymore
+                                                      start_plag_index_within_list] + 3
                 end_plag_index_within_article = indices_of_sentence_endings[end_plag_index_within_list]
-                length_of_plag = end_plag_index_within_article - start_plag_index_within_article + 1
 
                 # due to the sentence split, punctuation is lost, which is a problem for position determination, therefore a dot is appended to wiki excerpt
                 plag_excerpt = article_text[start_plag_index_within_article:end_plag_index_within_article + 1] + "."
+                plag_excerpt = plag_excerpt.replace("\n","")
+                length_of_plag = len(plag_excerpt)
+
                 plag = (start_plag_index_within_article, end_plag_index_within_article, length_of_plag,
                         plag_excerpt)
 
@@ -110,15 +113,31 @@ class PlagCreator:
                 potential_plagiarism_text = ""
                 plags_pos_in_potential_plagiarism_text_list = list()
                 plag_pos_in_potential_plagiarism_text_start = 0
+                part_index = 0
                 for part in potential_plagiarism_mix:
                     potential_plagiarism_text += part[2][3] + " "
                     if part[1]:  # meaning: save position if is_plag
-                        plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start,
+                        correction_amount = correct_position_in_potential_plagiarism_text_depending_on_previous_sentence_length(potential_plagiarism_mix, part_index)
+                        plags_pos_in_potential_plagiarism_text_list.append((plag_pos_in_potential_plagiarism_text_start - correction_amount,
                                                                             plag_pos_in_potential_plagiarism_text_start
                                                                             + part[2][2] + 1))
                     plag_pos_in_potential_plagiarism_text_start += part[2][2] + 1
+                    part_index = part_index + 1
 
                 return plags_pos_in_potential_plagiarism_text_list, potential_plagiarism_text
+
+            def correct_position_in_potential_plagiarism_text_depending_on_previous_sentence_length(potential_plagiarism_mix, part_index):
+                if part_index == 0:
+                    return 0
+                else:
+                    #get the text of the previous part
+                    text = potential_plagiarism_mix[part_index-1][2][3]
+                    sentence_list = re.split('\. |, |\? |! ', text)
+                    last_sentence = sentence_list[-1]
+                    if len(last_sentence) <= self.min_sentence_length_for_positioning:
+                        return len(last_sentence)
+                    else:
+                        return 0
 
             def compute_insertion_positions():
                 if enough_selections_for_plags():
@@ -208,12 +227,11 @@ class PlagCreator:
 
         def comparisonResponseStringBuilder(plag_position_ground_truth, plag_position_analysis_response, descriptor):
             plag_position_in_comparison = ""
-
             for plag_pos_input in plag_position_ground_truth:
-                plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
-                                              + " text ground truth:\t\t" + str(plag_pos_input) + os.linesep
                 for plag_pos_input_analysis_resp in plag_position_analysis_response:
                     if plag_pos_input_analysis_resp[0] == plag_pos_input[0]:
+                        plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
+                                                      + " text ground truth:\t\t" + str(plag_pos_input) + os.linesep
                         plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
                                                       + " text analysis response:\t" + str(plag_pos_input_analysis_resp) \
                                                       + os.linesep
