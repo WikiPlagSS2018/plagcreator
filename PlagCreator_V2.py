@@ -243,7 +243,9 @@ class PlagCreator:
                                                       + os.linesep
             return plag_position_in_comparison
 
-        return compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
+        elapsed_time_statement = "Elapsed time for analysis: " + str(self.extract_elapsed_time_of_analysis_response(
+            analysis_response))
+        return elapsed_time_statement + os.linesep + compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
                + compare_created_and_found_by_analysis_plag_positions_in_input_text() \
                + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
 
@@ -304,6 +306,10 @@ class PlagCreator:
                 raise IndexError('List has to be of length one or three.')
 
         return computed_responses
+
+    @staticmethod
+    def extract_elapsed_time_of_analysis_response(response):
+        return response['elapsed_time']
 
 
 if __name__ == "__main__":
