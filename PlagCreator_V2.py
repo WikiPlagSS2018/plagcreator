@@ -8,10 +8,10 @@ import numpy as np
 
 
 class PlagCreator:
-    def __init__(self, host="localhost"):
+    def __init__(self, base_url):
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
-        self.base_url = "http://" + host + ":8080/wikiplag/rest"
+        self.base_url = base_url
         self.min_sentence_length_for_positioning = 12
 
     # number_plagiarism: overall number of texts to be analyzed
@@ -297,8 +297,10 @@ class PlagCreator:
 
 
 if __name__ == "__main__":
-    pc = PlagCreator()  # Default is "localhost". You may want to choose parameter: "wikiplag.f4.htw-berlin.de"
-    my_plagiarisms = pc.create_plagiarism(1, 20, 3, -1)
+    wiki_pc = PlagCreator("http://localhost:8080/wikiplag/rest")  # Or: "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest"
+    # web2vec_pc = PlagCreator("ANOTHER BASE URL") # example usage for another algorithm
+
+    my_plagiarisms = wiki_pc.create_plagiarism(1, 20, 3, -1)
     for my_plagiarism in my_plagiarisms:
         print(my_plagiarism)
-        print(pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
+        print(wiki_pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
