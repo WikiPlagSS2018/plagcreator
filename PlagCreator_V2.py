@@ -243,7 +243,7 @@ class PlagCreator:
                                                       + os.linesep
             return plag_position_in_comparison
 
-        elapsed_time_statement = "Elapsed time for analysis: " + str(self.extract_elapsed_time_of_analysis_response(
+        elapsed_time_statement = "Elapsed time for analysis (ms): " + str(self.extract_elapsed_time_of_analysis_response(
             analysis_response))
         return elapsed_time_statement + os.linesep + compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
                + compare_created_and_found_by_analysis_plag_positions_in_input_text() \
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     wiki_pc = PlagCreator("http://localhost:8080/wikiplag/rest")  # Or: "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest"
     # web2vec_pc = PlagCreator("ANOTHER BASE URL") # example usage for another algorithm
 
-    my_plagiarisms = wiki_pc.create_plagiarism(1, 20, 3, -1)
-    for my_plagiarism in my_plagiarisms:
+    my_plagiarisms_for_wikiplag = wiki_pc.create_plagiarism(1, 10, 3, -1)
+    for my_plagiarism in my_plagiarisms_for_wikiplag:
         print(my_plagiarism)
         print(wiki_pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
