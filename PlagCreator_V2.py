@@ -25,7 +25,7 @@ class PlagCreator:
         :param number_selections: number of self-written sentences in each plagiarism
         :param number_plags: number of plag sentences (each taken from a different wikipedia article) per plagiarism
         :param start_docid_plags: wikipedia article id to start getting plags from
-                (-1 means: choose randomly from first 450,000 wiki articles)
+                (< 0 means: choose randomly from first 450,000 wiki articles)
         :return: list of generated plagiarisms including info about the plags sources and their positions in mixed text
         """
 
