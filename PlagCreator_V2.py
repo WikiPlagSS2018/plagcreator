@@ -9,15 +9,25 @@ import numpy as np
 
 class PlagCreator:
     def __init__(self, base_url):
+        """
+        Creates a PlagCreator
+        :param base_url: URL where to find API
+        """
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
         self.base_url = base_url
         self.min_sentence_length_for_positioning = 12
 
-    # number_plagiarism: overall number of texts to be analyzed
-    # number_selections: overall number of
-
     def create_plagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
+        """
+        Creates a plagiarism - a mixture of self-written text and plags (c&p text from wikipedia)
+        :param number_plagiarism: number of plagiarisms to create
+        :param number_selections: number of self-written sentences in each plagiarism
+        :param number_plags: number of plag sentences (each taken from a different wikipedia article) per plagiarism
+        :param start_docid_plags: wikipedia article id to start getting plags from
+                (-1 means: choose randomly from first 450,000 wiki articles)
+        :return: list of generated plagiarisms including info about the plags sources and their positions in mixed text
+        """
 
         def get_subset_from_base_text():
             indices_of_sentence_endings = [m.start() for m in re.finditer('\.', self.base_text)]
