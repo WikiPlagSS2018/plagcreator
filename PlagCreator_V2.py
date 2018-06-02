@@ -315,10 +315,10 @@ class PlagCreator:
 
 if __name__ == "__main__":
     # Or: http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse
-    wiki_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
+    wikiplag_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
     # web2vec_pc = PlagCreator("PUT analyse_endpoint of web2vec algorithm here") # example usage for another algorithm
 
-    my_plagiarisms_for_wikiplag = wiki_pc.create_plagiarism(3, 3, 3, -1)
+    my_plagiarisms_for_wikiplag = wikiplag_pc.create_plagiarism(3, 3, 3, -1)
     for my_plagiarism in my_plagiarisms_for_wikiplag:
         print(my_plagiarism)
-        print(wiki_pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
+        print(wikiplag_pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
