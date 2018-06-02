@@ -316,7 +316,7 @@ class PlagCreator:
 if __name__ == "__main__":
     # Or: http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse
     wikiplag_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
-    # web2vec_pc = PlagCreator("PUT analyse_endpoint of web2vec algorithm here") # example usage for another algorithm
+    # word2vec_pc = PlagCreator("PUT analyse_endpoint of word2vec algorithm here") # example usage for another algorithm
 
     my_plagiarisms_for_wikiplag = wikiplag_pc.create_plagiarism(3, 3, 3, -1)
     for my_plagiarism in my_plagiarisms_for_wikiplag:
