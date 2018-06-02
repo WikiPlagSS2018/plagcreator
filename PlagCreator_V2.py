@@ -8,14 +8,15 @@ import numpy as np
 
 
 class PlagCreator:
-    def __init__(self, base_url):
+    def __init__(self, analyse_endpoint):
         """
         Creates a PlagCreator
-        :param base_url: URL where to find API
+        :param analyse_endpoint: URL where to find analyse API to POST request at
         """
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
-        self.base_url = base_url
+        self.analyse_endpoint = analyse_endpoint
+        self.documents_endpoint = "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/documents/"
         self.min_sentence_length_for_positioning = 12
 
     def create_plagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
@@ -194,7 +195,7 @@ class PlagCreator:
 
         while len(original_wiki_texts) < number_plags:
             try:
-                resource = urllib.request.urlopen(self.base_url + "/documents/" + str(start_docid))
+                resource = urllib.request.urlopen(self.documents_endpoint + str(start_docid))
                 text = resource.read().decode('utf-8')
                 original_wiki_texts.append((start_docid, text))
             except:
@@ -250,10 +251,10 @@ class PlagCreator:
                + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
 
     def get_analysis_response_for_plagiarism(self, plagiarism):
-        url = self.base_url + "/analyse"
         data = {"text": plagiarism[0][1]}
         params_for_post = json.dumps(data).encode('utf8')
-        req_for_post = urllib.request.Request(url, data=params_for_post, headers={'content-type': 'application/json'})
+        req_for_post = urllib.request.Request(self.analyse_endpoint, data=params_for_post,
+                                              headers={'content-type': 'application/json'})
         response = urllib.request.urlopen(req_for_post)
         return json.loads(response.read().decode('utf8'))
 
@@ -313,10 +314,11 @@ class PlagCreator:
 
 
 if __name__ == "__main__":
-    wiki_pc = PlagCreator("http://localhost:8080/wikiplag/rest")  # Or: "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest"
-    # web2vec_pc = PlagCreator("ANOTHER BASE URL") # example usage for another algorithm
+    # Or: http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse
+    wiki_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
+    # web2vec_pc = PlagCreator("PUT analyse_endpoint of web2vec algorithm here") # example usage for another algorithm
 
-    my_plagiarisms_for_wikiplag = wiki_pc.create_plagiarism(1, 10, 3, -1)
+    my_plagiarisms_for_wikiplag = wiki_pc.create_plagiarism(3, 3, 3, -1)
     for my_plagiarism in my_plagiarisms_for_wikiplag:
         print(my_plagiarism)
         print(wiki_pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
