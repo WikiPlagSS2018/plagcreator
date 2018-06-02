@@ -8,15 +8,17 @@ import numpy as np
 
 
 class PlagCreator:
-    def __init__(self, analyse_endpoint):
+    def __init__(self, analyse_endpoint,
+                 documents_endpoint="http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/documents/"):
         """
         Creates a PlagCreator
-        :param analyse_endpoint: URL where to find analyse API to POST request at
+        :param analyse_endpoint: URL of analyse API to POST request at
+        :param documents_endpoint: URL of documents API to get wikipedia articles from (default: wikiplag server)
         """
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
         self.analyse_endpoint = analyse_endpoint
-        self.documents_endpoint = "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/documents/"
+        self.documents_endpoint = documents_endpoint
         self.min_sentence_length_for_positioning = 12
 
     def create_plagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
