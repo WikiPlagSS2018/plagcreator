@@ -80,7 +80,7 @@ class PlagCreator:
 
             for article in wiki_articles_plag:
                 article_docid = article[0]
-                article_text = article[1].replace("\n", "")
+                article_text = article[1]#.replace("\n", "")
                 indices_of_sentence_endings = [m.start() for m in re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article_text)]
                 indices_of_sentence_endings = list(filter(
                     lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
@@ -99,6 +99,8 @@ class PlagCreator:
                 # therefore a dot is appended to wiki excerpt
                 plag_excerpt = article_text[start_plag_index_within_article:end_plag_index_within_article] + "."
                 length_of_plag = len(plag_excerpt)
+
+                plag_excerpt = plag_excerpt.replace("\n", "")
 
                 plag = (start_plag_index_within_article, end_plag_index_within_article, length_of_plag,
                         plag_excerpt)
@@ -316,8 +318,8 @@ class PlagCreator:
 
 
 if __name__ == "__main__":
-    # Or: http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse
-    wikiplag_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
+    wikiplag_pc = PlagCreator("http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
+    #wikiplag_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
     # word2vec_pc = PlagCreator("PUT analyse_endpoint of word2vec algorithm here") # example usage for another algorithm
 
     my_plagiarisms_for_wikiplag = wikiplag_pc.create_plagiarism(3, 3, 3, -1)
