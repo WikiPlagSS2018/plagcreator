@@ -8,12 +8,12 @@ import numpy as np
 
 
 class AlgorithmTester:
-    def __init__(self, plagiarisms, analysis_endpoint="http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse"):
+    def __init__(self, plagiarisms, analysis_endpoint):
         """
         Creates a AlgorithmTester
 
         :param plagiarisms: list of plagiarisms to use for testing
-        :param analysis_endpoint: URL of analyse API to POST request at (default: wikiplag server)
+        :param analysis_endpoint: URL of analyse API to POST request at
         """
         self.analysis_endpoint = analysis_endpoint
         self.plagiarisms = plagiarisms
@@ -63,8 +63,9 @@ class AlgorithmTester:
                                                       + os.linesep
             return plag_position_in_comparison
 
-        elapsed_time_statement = "Elapsed time for analysis (ms): " + str(self.extract_elapsed_time_of_analysis_response(
-            analysis_response))
+        elapsed_time_statement = "Elapsed time for analysis (ms): " + str(
+            self.extract_elapsed_time_of_analysis_response(
+                analysis_response))
         return elapsed_time_statement + os.linesep + compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
                + compare_created_and_found_by_analysis_plag_positions_in_input_text() \
                + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
@@ -287,7 +288,7 @@ class PlagiarismCreator:
                     return 0
                 else:
                     # get the text of the previous part
-                    text = potential_plagiarism_mix[part_index-1][2][3]
+                    text = potential_plagiarism_mix[part_index - 1][2][3]
                     sentence_list = re.split('\. |, |\? |! ', text)
                     last_sentence = sentence_list[-1]
                     if len(last_sentence) <= self.min_sentence_length_for_positioning:
@@ -350,10 +351,13 @@ class PlagiarismCreator:
 if __name__ == "__main__":
     # Step 1: create plagiarisms
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
-    my_plagiarisms_for_tests = plagiarism_creator.create(3, 3, 3, -1)
+    my_plagiarisms_for_tests = plagiarism_creator.create(3, 2, 4, -1)
 
     # Step 2: test a algorithm
-    wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests)  # or add: "http://localhost:8080/wikiplag/rest/analyse"
+    wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
+                                      "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
+    # or for localhost: "http://localhost:8080/wikiplag/rest/analyse"
+
     # Example usage for another algorithm:
     # word2vec_tester = AlgorithmTester(plags_for_testing, "put analysis_endpoint of word2vec algorithm here")
 
