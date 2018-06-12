@@ -7,21 +7,159 @@ import json
 import numpy as np
 
 
-class PlagCreator:
-    def __init__(self, analyse_endpoint,
-                 documents_endpoint="http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/documents/"):
+class AlgorithmTester:
+    def __init__(self, plagiarisms, analysis_endpoint="http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse"):
         """
-        Creates a PlagCreator
-        :param analyse_endpoint: URL of analyse API to POST request at
+        Creates a AlgorithmTester
+
+        :param plagiarisms: list of plagiarisms to use for testing
+        :param analysis_endpoint: URL of analyse API to POST request at (default: wikiplag server)
+        """
+        self.analysis_endpoint = analysis_endpoint
+        self.plagiarisms = plagiarisms
+
+    def analyze(self):
+        for my_plagiarism in self.plagiarisms:
+            print(my_plagiarism)
+            print(self.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
+
+    def compare_created_and_found_by_analysis_values(self, plagiarism):
+        analysis_response = self.get_analysis_response_for_plagiarism(plagiarism)
+
+        def compare_created_and_found_by_analysis_wiki_ids():
+            wiki_ids_res_analysis = self.extract_info_of_wikiexcerpt_in_analysis_response(analysis_response, ["id"])
+            wiki_ids_creation = self.extract_wiki_ids_of_plagiarism(plagiarism)
+            wiki_ids_not_found = [not_found for not_found in wiki_ids_creation if
+                                  not_found not in wiki_ids_res_analysis]
+
+            return "Wiki Id's used for plag creation: " + str(wiki_ids_creation) + os.linesep \
+                   + "Wiki Id's as result of analysis:  " + str(wiki_ids_res_analysis) + os.linesep \
+                   + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found) + os.linesep
+
+        def compare_created_and_found_by_analysis_plag_positions_in_input_text():
+            plag_position_in_input_text_ground_truth = self.extract_plag_position_in_input_text_ground_truth(plagiarism)
+            plag_position_in_input_text_analysis_response = self.extract_plag_position_in_input_text_analysis_response(
+                analysis_response)
+            return comparison_response_string_builder(plag_position_in_input_text_ground_truth,
+                                                      plag_position_in_input_text_analysis_response, "input")
+
+        def compare_created_and_found_by_analysis_plag_positions_in_wiki_text():
+            plag_position_in_wikipedia_text_ground_truth = self.extract_plag_position_in_wiki_article_ground_truth(
+                plagiarism)
+            plag_position_in_wikipedia_text_analysis_response = \
+                self.extract_plag_position_in_wikipedia_text_analysis_response(analysis_response)
+            return comparison_response_string_builder(plag_position_in_wikipedia_text_ground_truth,
+                                                      plag_position_in_wikipedia_text_analysis_response, "wikipedia")
+
+        def comparison_response_string_builder(plag_position_ground_truth, plag_position_analysis_response, descriptor):
+            plag_position_in_comparison = ""
+            for plag_pos_input in plag_position_ground_truth:
+                for plag_pos_input_analysis_resp in plag_position_analysis_response:
+                    if plag_pos_input_analysis_resp[0] == plag_pos_input[0]:
+                        plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
+                                                      + " text ground truth:\t\t" + str(plag_pos_input) + os.linesep
+                        plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
+                                                      + " text analysis response:\t" + str(plag_pos_input_analysis_resp) \
+                                                      + os.linesep
+            return plag_position_in_comparison
+
+        elapsed_time_statement = "Elapsed time for analysis (ms): " + str(self.extract_elapsed_time_of_analysis_response(
+            analysis_response))
+        return elapsed_time_statement + os.linesep + compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
+               + compare_created_and_found_by_analysis_plag_positions_in_input_text() \
+               + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
+
+    def get_analysis_response_for_plagiarism(self, plagiarism):
+        return self.get_analysis_response(plagiarism[0][1])
+
+    def get_analysis_response_for_input_file(self, input_file):
+        with open(input_file, 'r', encoding='utf-8') as my_input_file:
+            plag_text = my_input_file.read()
+        return self.get_analysis_response(plag_text)
+
+    def get_analysis_response(self, text):
+        data = {"text": text}
+        params_for_post = json.dumps(data).encode('utf8')
+        req_for_post = urllib.request.Request(self.analysis_endpoint, data=params_for_post,
+                                              headers={'content-type': 'application/json'})
+        response = urllib.request.urlopen(req_for_post)
+        return json.loads(response.read().decode('utf8'))
+
+    @staticmethod
+    def save_analysis_response_to_output_file(analysis_response, output_file):
+        file = open(output_file, "w", encoding='utf-8')
+        file.write(json.dumps(analysis_response, indent=4, sort_keys=True))  # beautification
+        file.close()
+
+    @staticmethod
+    def extract_plag_position_in_input_text_ground_truth(plagiarisms):
+        article_id_and_position_in_plag = list()
+        for i in range(len(plagiarisms[0][0])):
+            article_id_and_position_in_plag.append((plagiarisms[1][i][0], plagiarisms[0][0][i]))
+        return article_id_and_position_in_plag
+
+    @staticmethod
+    def extract_plag_position_in_wiki_article_ground_truth(plagiarisms):
+        article_id_and_position_in_wiki_article = list()
+        for plag in plagiarisms[1]:
+            article_id_and_position_in_wiki_article.append((plag[0], (plag[2][0], plag[2][1])))
+        return article_id_and_position_in_wiki_article
+
+    @staticmethod
+    def extract_wiki_ids_of_plagiarism(plagiarism):
+        wiki_ids_creation = list()
+        plags_from_wiki_articles = plagiarism[1]
+        for plag_from_wiki_articles in plags_from_wiki_articles:
+            wiki_ids_creation.append(plag_from_wiki_articles[0])
+        return wiki_ids_creation
+
+    def extract_plag_position_in_input_text_analysis_response(self, response):
+        return self.extract_info_of_wikiexcerpt_in_analysis_response(response, ['id', 'start', 'end'])
+
+    def extract_plag_position_in_wikipedia_text_analysis_response(self, response):
+        return self.extract_info_of_wikiexcerpt_in_analysis_response(
+            response, ['id', 'start_of_plag_in_wiki', 'end_of_plag_in_wiki'])
+
+    @staticmethod
+    def extract_info_of_wikiexcerpt_in_analysis_response(response, fields_of_interest):
+        computed_responses = list()
+        list_of_plags = response['plags']
+        wiki_excerpts = list()
+        for list_of_plag in list_of_plags:
+            wiki_excerpts.append(list_of_plag['wiki_excerpts'])
+
+        # flattens wiki_excerpts list:
+        wiki_excerpts = [y for x in wiki_excerpts for y in x]
+        for wiki_excerpt in wiki_excerpts:
+            if len(fields_of_interest) == 1:
+                computed_responses.append(wiki_excerpt[fields_of_interest[0]])
+            elif len(fields_of_interest) == 3:
+                computed_responses.append((wiki_excerpt[fields_of_interest[0]],
+                                           (wiki_excerpt[fields_of_interest[1]], wiki_excerpt[fields_of_interest[2]])))
+            else:
+                raise IndexError('List has to be of length one or three.')
+
+        return computed_responses
+
+    @staticmethod
+    def extract_elapsed_time_of_analysis_response(response):
+        return response['elapsed_time']
+
+
+class PlagiarismCreator:
+    def __init__(self, documents_endpoint="http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/documents/"):
+        """
+        A Plagiarism is a mixture of self-written text and plags (c&p text from wikipedia)
+        Self-written sentences come from a "base text". They are not considered as or recognized as plags.
+
         :param documents_endpoint: URL of documents API to get wikipedia articles from (default: wikiplag server)
         """
         # get the base text, the plags are gonna be mixed with
         self.base_text = self.get_base_text().replace("\n", "")
-        self.analyse_endpoint = analyse_endpoint
         self.documents_endpoint = documents_endpoint
         self.min_sentence_length_for_positioning = 12
 
-    def create_plagiarism(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
+    def create(self, number_plagiarism, number_selections, number_plags, start_docid_plags):
         """
         Creates a plagiarism - a mixture of self-written text and plags (c&p text from wikipedia)
         :param number_plagiarism: number of plagiarisms to create
@@ -80,7 +218,7 @@ class PlagCreator:
 
             for article in wiki_articles_plag:
                 article_docid = article[0]
-                article_text = article[1]#.replace("\n", "")
+                article_text = article[1]  # .replace("\n", "")
                 indices_of_sentence_endings = [m.start() for m in re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article_text)]
                 indices_of_sentence_endings = list(filter(
                     lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
@@ -208,139 +346,19 @@ class PlagCreator:
 
         return original_wiki_texts
 
-    def compare_created_and_found_by_analysis_values(self, plagiarism):
-        analysis_response = self.get_analysis_response_for_plagiarism(plagiarism)
-
-        def compare_created_and_found_by_analysis_wiki_ids():
-            wiki_ids_res_analysis = self.extract_info_of_wikiexcerpt_in_analysis_response(analysis_response, ["id"])
-            wiki_ids_creation = self.extract_wiki_ids_of_plagiarism(plagiarism)
-            wiki_ids_not_found = [not_found for not_found in wiki_ids_creation if
-                                  not_found not in wiki_ids_res_analysis]
-
-            return "Wiki Id's used for plag creation: " + str(wiki_ids_creation) + os.linesep \
-                   + "Wiki Id's as result of analysis:  " + str(wiki_ids_res_analysis) + os.linesep \
-                   + "Wiki Id's that weren't found:     " + str(wiki_ids_not_found) + os.linesep
-
-        def compare_created_and_found_by_analysis_plag_positions_in_input_text():
-            plag_position_in_input_text_ground_truth = self.extract_plag_position_in_input_text_ground_truth(plagiarism)
-            plag_position_in_input_text_analysis_response = self.extract_plag_position_in_input_text_analysis_response(
-                analysis_response)
-            return comparison_response_string_builder(plag_position_in_input_text_ground_truth,
-                                                      plag_position_in_input_text_analysis_response, "input")
-
-        def compare_created_and_found_by_analysis_plag_positions_in_wiki_text():
-            plag_position_in_wikipedia_text_ground_truth = self.extract_plag_position_in_wiki_article_ground_truth(
-                plagiarism)
-            plag_position_in_wikipedia_text_analysis_response = \
-                self.extract_plag_position_in_wikipedia_text_analysis_response(analysis_response)
-            return comparison_response_string_builder(plag_position_in_wikipedia_text_ground_truth,
-                                                      plag_position_in_wikipedia_text_analysis_response, "wikipedia")
-
-        def comparison_response_string_builder(plag_position_ground_truth, plag_position_analysis_response, descriptor):
-            plag_position_in_comparison = ""
-            for plag_pos_input in plag_position_ground_truth:
-                for plag_pos_input_analysis_resp in plag_position_analysis_response:
-                    if plag_pos_input_analysis_resp[0] == plag_pos_input[0]:
-                        plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
-                                                      + " text ground truth:\t\t" + str(plag_pos_input) + os.linesep
-                        plag_position_in_comparison = plag_position_in_comparison + "Positions in " + descriptor \
-                                                      + " text analysis response:\t" + str(plag_pos_input_analysis_resp) \
-                                                      + os.linesep
-            return plag_position_in_comparison
-
-        elapsed_time_statement = "Elapsed time for analysis (ms): " + str(self.extract_elapsed_time_of_analysis_response(
-            analysis_response))
-        return elapsed_time_statement + os.linesep + compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
-               + compare_created_and_found_by_analysis_plag_positions_in_input_text() \
-               + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
-
-    def get_analysis_response_for_plagiarism(self, plagiarism):
-        return self.get_analysis_response(plagiarism[0][1])
-
-    def get_analysis_response_for_input_file(self, input_file):
-        with open(input_file, 'r', encoding='utf-8') as my_input_file:
-            plag_text = my_input_file.read()
-        return self.get_analysis_response(plag_text)
-
-    def get_analysis_response(self, text):
-        data = {"text": text}
-        params_for_post = json.dumps(data).encode('utf8')
-        req_for_post = urllib.request.Request(self.analyse_endpoint, data=params_for_post,
-                                              headers={'content-type': 'application/json'})
-        response = urllib.request.urlopen(req_for_post)
-        return json.loads(response.read().decode('utf8'))
-
-    @staticmethod
-    def save_analysis_response_to_output_file(analysis_response, output_file):
-        file = open(output_file, "w", encoding='utf-8')
-        file.write(json.dumps(analysis_response, indent=4, sort_keys=True))  # beautification
-        file.close()
-
-    @staticmethod
-    def extract_plag_position_in_input_text_ground_truth(plagiarisms):
-        article_id_and_position_in_plag = list()
-        for i in range(len(plagiarisms[0][0])):
-            article_id_and_position_in_plag.append((plagiarisms[1][i][0], plagiarisms[0][0][i]))
-        return article_id_and_position_in_plag
-
-    @staticmethod
-    def extract_plag_position_in_wiki_article_ground_truth(plagiarisms):
-        article_id_and_position_in_wiki_article = list()
-        for plag in plagiarisms[1]:
-            article_id_and_position_in_wiki_article.append((plag[0], (plag[2][0], plag[2][1])))
-        return article_id_and_position_in_wiki_article
-
-    @staticmethod
-    def extract_wiki_ids_of_plagiarism(plagiarism):
-        wiki_ids_creation = list()
-        plags_from_wiki_articles = plagiarism[1]
-        for plag_from_wiki_articles in plags_from_wiki_articles:
-            wiki_ids_creation.append(plag_from_wiki_articles[0])
-        return wiki_ids_creation
-
-    def extract_plag_position_in_input_text_analysis_response(self, response):
-        return self.extract_info_of_wikiexcerpt_in_analysis_response(response, ['id', 'start', 'end'])
-
-    def extract_plag_position_in_wikipedia_text_analysis_response(self, response):
-        return self.extract_info_of_wikiexcerpt_in_analysis_response(
-            response, ['id', 'start_of_plag_in_wiki', 'end_of_plag_in_wiki'])
-
-    @staticmethod
-    def extract_info_of_wikiexcerpt_in_analysis_response(response, fields_of_interest):
-        computed_responses = list()
-        list_of_plags = response['plags']
-        wiki_excerpts = list()
-        for list_of_plag in list_of_plags:
-            wiki_excerpts.append(list_of_plag['wiki_excerpts'])
-
-        # flattens wiki_excerpts list:
-        wiki_excerpts = [y for x in wiki_excerpts for y in x]
-        for wiki_excerpt in wiki_excerpts:
-            if len(fields_of_interest) == 1:
-                computed_responses.append(wiki_excerpt[fields_of_interest[0]])
-            elif len(fields_of_interest) == 3:
-                computed_responses.append((wiki_excerpt[fields_of_interest[0]],
-                                           (wiki_excerpt[fields_of_interest[1]], wiki_excerpt[fields_of_interest[2]])))
-            else:
-                raise IndexError('List has to be of length one or three.')
-
-        return computed_responses
-
-    @staticmethod
-    def extract_elapsed_time_of_analysis_response(response):
-        return response['elapsed_time']
-
 
 if __name__ == "__main__":
-    wikiplag_pc = PlagCreator("http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
-    # wikiplag_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
-    # word2vec_pc = PlagCreator("PUT analyse_endpoint of word2vec algorithm here") # example usage for another algorithm
+    # Step 1: create plagiarisms
+    plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
+    my_plagiarisms_for_tests = plagiarism_creator.create(3, 3, 3, -1)
 
-    my_plagiarisms_for_wikiplag = wikiplag_pc.create_plagiarism(3, 3, 3, -1)
-    for my_plagiarism in my_plagiarisms_for_wikiplag:
-        print(my_plagiarism)
-        print(wikiplag_pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
+    # Step 2: test a algorithm
+    wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests)  # or add: "http://localhost:8080/wikiplag/rest/analyse"
+    # Example usage for another algorithm:
+    # word2vec_tester = AlgorithmTester(plags_for_testing, "put analysis_endpoint of word2vec algorithm here")
+
+    wikiplag_tester.analyze()
 
     # Example usage of input/ output file read and write
-    analysis_resp = wikiplag_pc.get_analysis_response_for_input_file('request/input.txt')
-    wikiplag_pc.save_analysis_response_to_output_file(analysis_resp, 'response/response.txt')
+    analysis_resp = wikiplag_tester.get_analysis_response_for_input_file('request/input.txt')
+    wikiplag_tester.save_analysis_response_to_output_file(analysis_resp, 'response/response.txt')
