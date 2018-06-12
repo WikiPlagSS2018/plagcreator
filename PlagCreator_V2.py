@@ -255,12 +255,26 @@ class PlagCreator:
                + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
 
     def get_analysis_response_for_plagiarism(self, plagiarism):
-        data = {"text": plagiarism[0][1]}
+        return self.get_analysis_response(plagiarism[0][1])
+
+    def get_analysis_response_for_input_file(self, input_file):
+        with open(input_file, 'r', encoding='utf-8') as my_input_file:
+            plag_text = my_input_file.read()
+        return self.get_analysis_response(plag_text)
+
+    def get_analysis_response(self, text):
+        data = {"text": text}
         params_for_post = json.dumps(data).encode('utf8')
         req_for_post = urllib.request.Request(self.analyse_endpoint, data=params_for_post,
                                               headers={'content-type': 'application/json'})
         response = urllib.request.urlopen(req_for_post)
         return json.loads(response.read().decode('utf8'))
+
+    @staticmethod
+    def save_analysis_response_to_output_file(analysis_response, output_file):
+        file = open(output_file, "w", encoding='utf-8')
+        file.write(json.dumps(analysis_response, indent=4, sort_keys=True))  # beautification
+        file.close()
 
     @staticmethod
     def extract_plag_position_in_input_text_ground_truth(plagiarisms):
@@ -319,10 +333,14 @@ class PlagCreator:
 
 if __name__ == "__main__":
     wikiplag_pc = PlagCreator("http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
-    #wikiplag_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
+    # wikiplag_pc = PlagCreator("http://localhost:8080/wikiplag/rest/analyse")
     # word2vec_pc = PlagCreator("PUT analyse_endpoint of word2vec algorithm here") # example usage for another algorithm
 
     my_plagiarisms_for_wikiplag = wikiplag_pc.create_plagiarism(3, 3, 3, -1)
     for my_plagiarism in my_plagiarisms_for_wikiplag:
         print(my_plagiarism)
         print(wikiplag_pc.compare_created_and_found_by_analysis_values(my_plagiarism) + os.linesep)
+
+    # Example usage of input/ output file read and write
+    analysis_resp = wikiplag_pc.get_analysis_response_for_input_file('request/input.txt')
+    wikiplag_pc.save_analysis_response_to_output_file(analysis_resp, 'response/response.txt')
