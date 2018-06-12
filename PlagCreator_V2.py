@@ -353,13 +353,13 @@ if __name__ == "__main__":
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
     my_plagiarisms_for_tests = plagiarism_creator.create(3, 2, 4, -1)
 
-    # Step 2: test a algorithm
+    # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
                                       "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
     # or for localhost: "http://localhost:8080/wikiplag/rest/analyse"
 
     # Example usage for another algorithm:
-    # word2vec_tester = AlgorithmTester(plags_for_testing, "put analysis_endpoint of word2vec algorithm here")
+    # word2vec_tester = AlgorithmTester(my_plagiarisms_for_tests, "put analysis_endpoint of word2vec algorithm here")
 
     wikiplag_tester.analyze()
 
