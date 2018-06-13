@@ -10,7 +10,7 @@ import numpy as np
 class AlgorithmTester:
     def __init__(self, plagiarisms, analysis_endpoint):
         """
-        Creates a AlgorithmTester
+        Creates an AlgorithmTester
 
         :param plagiarisms: list of plagiarisms to use for testing
         :param analysis_endpoint: URL of analyse API to POST request at
@@ -151,7 +151,7 @@ class PlagiarismCreator:
     def __init__(self, documents_endpoint="http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/documents/"):
         """
         A Plagiarism is a mixture of self-written text and plags (c&p text from wikipedia)
-        Self-written sentences come from a "base text". They are not considered as or recognized as plags.
+        Self-written sentences come from a "base text". They are neither considered as nor recognized as plags.
 
         :param documents_endpoint: URL of documents API to get wikipedia articles from (default: wikiplag server)
         """
