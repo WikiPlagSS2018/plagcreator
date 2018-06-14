@@ -5,7 +5,7 @@ import re
 import copy
 import json
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class AlgorithmTester:
     def __init__(self, plagiarisms, analysis_endpoint):
@@ -452,19 +452,70 @@ class AlgorithmComparator:
 
             return np.array(deviations).mean()
 
+        def put_elapsed_time_into_distr(results):
+            self.elapsed_time_distr = list()
+            for result in results:
+                self.elapsed_time_distr.append(result.elapsed_time)
+
+        def put_share_plags_found_into_distr(results):
+            self.average_share_plags_distr = list()
+            for result in results:
+                number_found = np.intersect1d(np.array(result.plag_ids_gt), np.array(result.plag_ids_ar))
+                self.average_share_plags_distr.append(len(number_found) / len(result.plag_ids_gt))
+
+        def put_input_text_deviation_into_distr(results):
+            self.input_text_deviation_distr = list()
+            for result in results:
+                for ground_truth in result.input_text_positions_gt:
+                    for analysis_response in result.input_text_positions_ar:
+                        if ground_truth[0] == analysis_response[0]:
+                            start = abs(ground_truth[1][0] - analysis_response[1][0])
+                            end = abs(ground_truth[1][1] - analysis_response[1][1])
+                            self.input_text_deviation_distr.append(start+end)
+
+        def put_wiki_text_deviation_into_distr(results):
+            self.wiki_text_deviation_distr = list()
+            for result in results:
+                for ground_truth in result.wiki_text_positions_gt:
+                    for analysis_response in result.wiki_text_positions_ar:
+                        if ground_truth[0] == analysis_response[0]:
+                            start = abs(ground_truth[1][0] - analysis_response[1][0])
+                            end = abs(ground_truth[1][1] - analysis_response[1][1])
+                            self.wiki_text_deviation_distr.append(start+end)
+
+        def make_histograms():
+            plt.figure(1)
+            plt.hist(self.elapsed_time_distr)
+            plt.title('elapsed time')
+            plt.figure(2)
+            plt.hist(self.average_share_plags_distr)
+            plt.title('share of found plags')
+            plt.figure(3)
+            plt.hist(self.input_text_deviation_distr)
+            plt.title('deviation from input text')
+            plt.figure(4)
+            plt.hist(self.wiki_text_deviation_distr)
+            plt.title('deviation from wiki text')
+            plt.show()
+
         for algo in self.algo_results:
+            put_elapsed_time_into_distr(algo[1])
+            put_input_text_deviation_into_distr(algo[1])
+            put_share_plags_found_into_distr(algo[1])
+            put_wiki_text_deviation_into_distr(algo[1])
             print("Algorithm: ", algo[0])
             print("Average elapsed time: ", get_average_elapsed_time(algo[1]))
             print("Average share of found plags: ", get_average_share_plags_found(algo[1]))
             print("Average deviation from input text position: ", get_average_input_text_deviation(algo[1]))
             print("Average deviation from wiki text position: ", get_average_wiki_text_deviation(algo[1]))
+            make_histograms()
 
 
 
 if __name__ == "__main__":
     # Step 1: create plagiarisms
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
-    my_plagiarisms_for_tests = plagiarism_creator.create(3, 2, 4, -1)
+    my_plagiarisms_for_tests = plagiarism_creator.create(10, 2, 4, -1)
 
     # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
