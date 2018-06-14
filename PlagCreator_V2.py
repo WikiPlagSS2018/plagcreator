@@ -7,6 +7,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class AlgorithmTester:
     def __init__(self, plagiarisms, analysis_endpoint):
         """
@@ -33,7 +34,6 @@ class AlgorithmTester:
         if output_mode == 'object':
             return analysis_results
 
-
     # mode = 'string'(string output); 'object'(AnalysisResult Object)
     def compare_created_and_found_by_analysis_values(self, plagiarism, output_mode):
         analysis_response = self.get_analysis_response_for_plagiarism(plagiarism)
@@ -54,7 +54,6 @@ class AlgorithmTester:
                 analysis_result.plag_ids_gt = wiki_ids_creation
                 analysis_result.plag_ids_ar = wiki_ids_res_analysis
 
-
         def compare_created_and_found_by_analysis_plag_positions_in_input_text():
             plag_position_in_input_text_ground_truth = self.extract_plag_position_in_input_text_ground_truth(plagiarism)
             plag_position_in_input_text_analysis_response = self.extract_plag_position_in_input_text_analysis_response(
@@ -73,7 +72,8 @@ class AlgorithmTester:
                 self.extract_plag_position_in_wikipedia_text_analysis_response(analysis_response)
             if output_mode == 'string':
                 return comparison_response_string_builder(plag_position_in_wikipedia_text_ground_truth,
-                                                          plag_position_in_wikipedia_text_analysis_response, "wikipedia")
+                                                          plag_position_in_wikipedia_text_analysis_response,
+                                                          "wikipedia")
             elif output_mode == 'object':
                 analysis_result.wiki_text_positions_gt = plag_position_in_wikipedia_text_ground_truth
                 analysis_result.wiki_text_positions_ar = plag_position_in_wikipedia_text_analysis_response
@@ -92,8 +92,7 @@ class AlgorithmTester:
 
         if output_mode == 'string':
             elapsed_time_statement = "Elapsed time for analysis (ms): " + str(
-                self.extract_elapsed_time_of_analysis_response(
-                    analysis_response))
+                self.extract_elapsed_time_of_analysis_response(analysis_response))
             return elapsed_time_statement + os.linesep + compare_created_and_found_by_analysis_wiki_ids() + os.linesep \
                    + compare_created_and_found_by_analysis_plag_positions_in_input_text() \
                    + os.linesep + compare_created_and_found_by_analysis_plag_positions_in_wiki_text()
@@ -387,9 +386,10 @@ class AnalysisResult:
     # plag_ids_gt (type = list of scalars): plags that were placed into the text that was analyzed
     # plag_ids_ar (type = list of scalars): plags that were identified by the algorithm
     # input_text_positions_gt (type = list of tuples[from, to]): true text positions of plags in input text
-    # input_text_positions_ar (type = list of tuples[from, to]): text positions of plags in input text as determined by algorithm
+    # input_text_positions_ar (type = list of tuples[from, to]): text pos of plags in input text as determined by algo
     # same with wiki article positions
-    def __init__(self, elapsed_time = None, plag_ids_gt = None, plag_ids_ar = None, input_text_positions_gt = None, input_text_positions_ar = None, wiki_text_positions_gt = None, wiki_text_positions_ar = None):
+    def __init__(self, elapsed_time=None, plag_ids_gt=None, plag_ids_ar=None, input_text_positions_gt=None,
+                 input_text_positions_ar=None, wiki_text_positions_gt=None, wiki_text_positions_ar=None):
         self.elapsed_time = elapsed_time
 
         self.plag_ids_gt = plag_ids_gt
@@ -406,27 +406,31 @@ class AlgorithmComparator:
     # algo_results is supposed to be a list of tuples with ('name of algo', AnalysisResult-Object)
     # create_parameters: parameters that were used to create plags
     # algo_parameters: parameters that were used in the algorithm
-    def __init__(self, algo_results, create_parameters = None, algo_parameters = None):
+    def __init__(self, algo_results, create_parameters=None, algo_parameters=None):
         self.algo_results = algo_results
+        self.wiki_text_deviation_distr = None
+        self.input_text_deviation_distr = None
+        self.average_share_plags_distr = None
+        self.elapsed_time_distr = None
 
     def compare_algorithms(self):
 
-        #average per input text
+        # average per input text
         def get_average_elapsed_time(results):
-            sum = 0
+            time_sum = 0
             for result in results:
-                sum = sum + result.elapsed_time
-            return sum/len(results)
+                time_sum = time_sum + result.elapsed_time
+            return time_sum / len(results)
 
-        #average per input text
+        # average per input text
         def get_average_share_plags_found(results):
             share_sum = 0
             for result in results:
                 number_found = np.intersect1d(np.array(result.plag_ids_gt), np.array(result.plag_ids_ar))
                 share_sum = share_sum + len(number_found) / len(result.plag_ids_gt)
-            return share_sum/len(results)
+            return share_sum / len(results)
 
-        #average per found plag
+        # average per found plag
         def get_average_input_text_deviation(results):
             deviations = list()
             for result in results:
@@ -435,11 +439,11 @@ class AlgorithmComparator:
                         if ground_truth[0] == analysis_response[0]:
                             start = abs(ground_truth[1][0] - analysis_response[1][0])
                             end = abs(ground_truth[1][1] - analysis_response[1][1])
-                            deviations.append(start+end)
+                            deviations.append(start + end)
 
             return np.array(deviations).mean()
 
-        #average per found plag
+        # average per found plag
         def get_average_wiki_text_deviation(results):
             deviations = list()
             for result in results:
@@ -448,7 +452,7 @@ class AlgorithmComparator:
                         if ground_truth[0] == analysis_response[0]:
                             start = abs(ground_truth[1][0] - analysis_response[1][0])
                             end = abs(ground_truth[1][1] - analysis_response[1][1])
-                            deviations.append(start+end)
+                            deviations.append(start + end)
 
             return np.array(deviations).mean()
 
@@ -471,7 +475,7 @@ class AlgorithmComparator:
                         if ground_truth[0] == analysis_response[0]:
                             start = abs(ground_truth[1][0] - analysis_response[1][0])
                             end = abs(ground_truth[1][1] - analysis_response[1][1])
-                            self.input_text_deviation_distr.append(start+end)
+                            self.input_text_deviation_distr.append(start + end)
 
         def put_wiki_text_deviation_into_distr(results):
             self.wiki_text_deviation_distr = list()
@@ -481,7 +485,7 @@ class AlgorithmComparator:
                         if ground_truth[0] == analysis_response[0]:
                             start = abs(ground_truth[1][0] - analysis_response[1][0])
                             end = abs(ground_truth[1][1] - analysis_response[1][1])
-                            self.wiki_text_deviation_distr.append(start+end)
+                            self.wiki_text_deviation_distr.append(start + end)
 
         def make_histograms():
             plt.figure(1)
@@ -511,11 +515,10 @@ class AlgorithmComparator:
             make_histograms()
 
 
-
 if __name__ == "__main__":
     # Step 1: create plagiarisms
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
-    my_plagiarisms_for_tests = plagiarism_creator.create(10, 2, 4, -1)
+    my_plagiarisms_for_tests = plagiarism_creator.create(3, 2, 4, -1)
 
     # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
@@ -529,13 +532,12 @@ if __name__ == "__main__":
     # algorithm_testers = [wikiplag_tester, ...]
 
     # this needs to be done in a loop if there is more than one algorithm, results need to be put in a list
-    #wikiplag_tester.analyze('string')
     analysis_results_wikiplag = wikiplag_tester.analyze('object')
+    print(wikiplag_tester.analyze('string'))
 
     # the list is fed into the AlgorithmComparator
     algorithm_comparator = AlgorithmComparator(list([("wikiplag", analysis_results_wikiplag)]))
     algorithm_comparator.compare_algorithms()
-
 
     # Example usage of input/ output file read and write
     analysis_resp = wikiplag_tester.get_analysis_response_for_input_file('request/input.txt')
