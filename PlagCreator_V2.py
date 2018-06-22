@@ -6,6 +6,9 @@ import copy
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+from scipy.stats import stats
+from collections import defaultdict
 
 
 class AlgorithmTester:
@@ -412,6 +415,7 @@ class AlgorithmComparator:
         self.input_text_deviation_distr = None
         self.average_share_plags_distr = None
         self.elapsed_time_distr = None
+        self.data = pd.DataFrame(columns=["index", "algo", "wiki_text_deviation", "input_text_deviation", "average_share_plags_found", "elapsed_time"])
 
     def compare_algorithms(self):
 
@@ -487,26 +491,48 @@ class AlgorithmComparator:
                             end = abs(ground_truth[1][1] - analysis_response[1][1])
                             self.wiki_text_deviation_distr.append(start + end)
 
+        def put_results_into_dataframe(idx, algo_name):
+            index = np.full(len(self.wiki_text_deviation_distr), idx)
+            id = np.full(len(self.wiki_text_deviation_distr), algo_name)
+            data_zipped_list = list(zip(index,id,self.wiki_text_deviation_distr,self.input_text_deviation_distr,self.average_share_plags_distr,self.elapsed_time_distr))
+            self.data = pd.concat([self.data, pd.DataFrame(data_zipped_list, columns=["index", "algo", "wiki_text_deviation", "input_text_deviation", "average_share_plags_found", "elapsed_time"])])
+
+        def compute_statistical_evidence_for_group_differences():
+            grouped_data = self.data.groupby(["algo"])
+            results = defaultdict(list)
+
+            for algo_1 in grouped_data:
+                for algo_2 in grouped_data:
+                    if algo_1[0] != algo_2[0]:
+                        u, p = stats.mannwhitneyu(algo_1[1]["wiki_text_deviation"], algo_2[1]["wiki_text_deviation"])
+                        results[algo_1[0]].append((algo_2[0], p))
+
+            return results
+
+
         def make_histograms():
-            plt.figure(1)
+            plt.figure()
             plt.hist(self.elapsed_time_distr)
             plt.title('elapsed time')
-            plt.figure(2)
+            plt.figure()
             plt.hist(self.average_share_plags_distr)
             plt.title('share of found plags')
-            plt.figure(3)
+            plt.figure()
             plt.hist(self.input_text_deviation_distr)
             plt.title('deviation from input text')
-            plt.figure(4)
+            plt.figure()
             plt.hist(self.wiki_text_deviation_distr)
             plt.title('deviation from wiki text')
-            plt.show()
 
-        for algo in self.algo_results:
+
+
+
+        for idx, algo in enumerate(self.algo_results):
             put_elapsed_time_into_distr(algo[1])
             put_input_text_deviation_into_distr(algo[1])
             put_share_plags_found_into_distr(algo[1])
             put_wiki_text_deviation_into_distr(algo[1])
+            put_results_into_dataframe(idx, algo[0])
             print("Algorithm: ", algo[0])
             print("Average elapsed time: ", get_average_elapsed_time(algo[1]))
             print("Average share of found plags: ", get_average_share_plags_found(algo[1]))
@@ -514,14 +540,27 @@ class AlgorithmComparator:
             print("Average deviation from wiki text position: ", get_average_wiki_text_deviation(algo[1]))
             make_histograms()
 
+        statistical_comparison_results = compute_statistical_evidence_for_group_differences()
+
+        print(statistical_comparison_results)
+
+        plt.show()
+
+
+
 
 if __name__ == "__main__":
     # Step 1: create plagiarisms
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
+    # create 10 documents, each containing 2 "self-written" sections and 4 plagiarized sections, -1 = select plag-sections
+    # randomly from the first 450,000 wiki-articles
     my_plagiarisms_for_tests = plagiarism_creator.create(3, 2, 4, -1)
 
     # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
+                                      "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
+
+    wikiplag_tester_test_for_statistics = AlgorithmTester(my_plagiarisms_for_tests,
                                       "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
     # or for localhost: "http://localhost:8080/wikiplag/rest/analyse"
 
@@ -533,10 +572,11 @@ if __name__ == "__main__":
 
     # this needs to be done in a loop if there is more than one algorithm, results need to be put in a list
     analysis_results_wikiplag = wikiplag_tester.analyze('object')
+    analysis_results_wikiplag_test_for_statistics = wikiplag_tester_test_for_statistics.analyze("object")
     print(wikiplag_tester.analyze('string'))
 
     # the list is fed into the AlgorithmComparator
-    algorithm_comparator = AlgorithmComparator(list([("wikiplag", analysis_results_wikiplag)]))
+    algorithm_comparator = AlgorithmComparator(list([("wikiplag", analysis_results_wikiplag), ("wikiplag_test_for_statistics", analysis_results_wikiplag_test_for_statistics)]))
     algorithm_comparator.compare_algorithms()
 
     # Example usage of input/ output file read and write
