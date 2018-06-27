@@ -238,18 +238,27 @@ class PlagiarismCreator:
             while is_there_a_small_sentence_list:
                 wiki_articles_plag = self.get_wiki_articles_from_db(number_plags, start_docid_plags)
                 length_list = np.array([])
+                index_error_repeat_get_articles = None
                 for article in wiki_articles_plag:
                     article_text = article[1]
                     indices_of_sentence_endings = [m.start() for m in
                                                    re.finditer('[^A-Z0-9]\.(?!\s[a-z])', article_text)]
-                    indices_of_sentence_endings = list(filter(
-                        lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
-                            x + 3]) is not None, indices_of_sentence_endings))
+
+                    #some articles seem to have a strange structure that is not accounted for, therefore exception needs to be caughtt
+                    try:
+                        indices_of_sentence_endings = list(filter(
+                            lambda x: re.match('[A-Z]', article_text[x + 2]) is not None or re.match('[A-Z]', article_text[
+                                x + 3]) is not None, indices_of_sentence_endings))
+                    except IndexError:
+                        index_error_repeat_get_articles = True
+                        print("Index Error caught")
+                        break
                     length_list = np.append(length_list, len(indices_of_sentence_endings))
-                if len(length_list[np.where(length_list < 5)]) > 0:
-                    is_there_a_small_sentence_list = True
-                else:
-                    is_there_a_small_sentence_list = False
+                if index_error_repeat_get_articles != True:
+                    if len(length_list[np.where(length_list < 5)]) > 0:
+                        is_there_a_small_sentence_list = True
+                    else:
+                        is_there_a_small_sentence_list = False
 
             is_plag = True
 
@@ -496,33 +505,49 @@ class AlgorithmComparator:
             id = np.full(len(self.wiki_text_deviation_distr), algo_name)
             data_zipped_list = list(zip(index,id,self.wiki_text_deviation_distr,self.input_text_deviation_distr,self.average_share_plags_distr,self.elapsed_time_distr))
             self.data = pd.concat([self.data, pd.DataFrame(data_zipped_list, columns=["index", "algo", "wiki_text_deviation", "input_text_deviation", "average_share_plags_found", "elapsed_time"])])
+            self.data.to_csv('algo_resuls_detailed.csv')
 
         def compute_statistical_evidence_for_group_differences():
             grouped_data = self.data.groupby(["algo"])
-            results = defaultdict(list)
+            results = pd.DataFrame(columns=["algo_1", "algo_2", "wiki_text_deviation_p", "input_text_deviation_p", "average_share_plags_found_p", "elapsed_time_p"])
+            parameters = ["wiki_text_deviation", "input_text_deviation", "average_share_plags_found", "elapsed_time"]
 
+            count = 0
             for algo_1 in grouped_data:
                 for algo_2 in grouped_data:
                     if algo_1[0] != algo_2[0]:
-                        u, p = stats.mannwhitneyu(algo_1[1]["wiki_text_deviation"], algo_2[1]["wiki_text_deviation"])
-                        results[algo_1[0]].append((algo_2[0], p))
+                        p_list = list([algo_1[0], algo_2[0]])
+                        for par in parameters:
+                            u, p = stats.mannwhitneyu(algo_1[1][par], algo_2[1][par])
+                            p_list.append(p)
+                        results.loc[count] = p_list
+                        count = count + 1
 
+            results.to_csv('mannwhitney_difference_results.csv')
             return results
 
 
-        def make_histograms():
+        def make_histograms(algo_name):
             plt.figure()
-            plt.hist(self.elapsed_time_distr)
-            plt.title('elapsed time')
+            plt.hist(self.elapsed_time_distr, bins=np.arange(0, 5000 + 100, 100))
+            plt.title(algo_name + ' elapsed time')
+            plt.xlabel("time in ms")
+            plt.ylabel("number of occurences")
             plt.figure()
-            plt.hist(self.average_share_plags_distr)
-            plt.title('share of found plags')
+            plt.hist(self.average_share_plags_distr, bins=np.arange(0, 1 + 0.01, 0.01))
+            plt.title(algo_name + ' share of found plags')
+            plt.xlabel("x * 100 = percent")
+            plt.ylabel("number of occurences")
             plt.figure()
-            plt.hist(self.input_text_deviation_distr)
-            plt.title('deviation from input text')
+            plt.hist(self.input_text_deviation_distr, bins=np.arange(0, 5000 + 10, 10))
+            plt.title(algo_name + ' deviation from input text')
+            plt.xlabel("number of chars")
+            plt.ylabel("number of occurences")
             plt.figure()
-            plt.hist(self.wiki_text_deviation_distr)
-            plt.title('deviation from wiki text')
+            plt.hist(self.wiki_text_deviation_distr, bins=np.arange(0, 5000 + 10, 10))
+            plt.title(algo_name + ' deviation from wiki text')
+            plt.xlabel("number of chars")
+            plt.ylabel("number of occurences")
 
 
 
@@ -538,11 +563,11 @@ class AlgorithmComparator:
             print("Average share of found plags: ", get_average_share_plags_found(algo[1]))
             print("Average deviation from input text position: ", get_average_input_text_deviation(algo[1]))
             print("Average deviation from wiki text position: ", get_average_wiki_text_deviation(algo[1]))
-            make_histograms()
+            make_histograms(algo[0])
 
         statistical_comparison_results = compute_statistical_evidence_for_group_differences()
 
-        print(statistical_comparison_results)
+        print(statistical_comparison_results.to_string())
 
         plt.show()
 
@@ -554,14 +579,14 @@ if __name__ == "__main__":
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
     # create 10 documents, each containing 2 "self-written" sections and 4 plagiarized sections, -1 = select plag-sections
     # randomly from the first 450,000 wiki-articles
-    my_plagiarisms_for_tests = plagiarism_creator.create(3, 2, 4, -1)
+    my_plagiarisms_for_tests = plagiarism_creator.create(250, 2, 4, -1)
 
     # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
                                       "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
 
-    wikiplag_tester_test_for_statistics = AlgorithmTester(my_plagiarisms_for_tests,
-                                      "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
+    wikiplag_tester_test_short_stopwordlist = AlgorithmTester(my_plagiarisms_for_tests,
+                                      "http://localhost:8080/wikiplag/rest/analyse")
     # or for localhost: "http://localhost:8080/wikiplag/rest/analyse"
 
     # Example usage for another algorithm:
@@ -572,13 +597,13 @@ if __name__ == "__main__":
 
     # this needs to be done in a loop if there is more than one algorithm, results need to be put in a list
     analysis_results_wikiplag = wikiplag_tester.analyze('object')
-    analysis_results_wikiplag_test_for_statistics = wikiplag_tester_test_for_statistics.analyze("object")
-    print(wikiplag_tester.analyze('string'))
+    analysis_wikiplag_tester_test_short_stopwordlist = wikiplag_tester_test_short_stopwordlist.analyze("object")
+    #print(wikiplag_tester.analyze('string'))
 
     # the list is fed into the AlgorithmComparator
-    algorithm_comparator = AlgorithmComparator(list([("wikiplag", analysis_results_wikiplag), ("wikiplag_test_for_statistics", analysis_results_wikiplag_test_for_statistics)]))
+    algorithm_comparator = AlgorithmComparator(list([("wikiplag_long_stopwordlist", analysis_results_wikiplag), ("wikiplag_short_stopwordlist", analysis_wikiplag_tester_test_short_stopwordlist)]))
     algorithm_comparator.compare_algorithms()
 
     # Example usage of input/ output file read and write
-    analysis_resp = wikiplag_tester.get_analysis_response_for_input_file('request/input.txt')
-    wikiplag_tester.save_analysis_response_to_output_file(analysis_resp, 'response/response.txt')
+    #analysis_resp = wikiplag_tester.get_analysis_response_for_input_file('request/input.txt')
+    #wikiplag_tester.save_analysis_response_to_output_file(analysis_resp, 'response/response.txt')
