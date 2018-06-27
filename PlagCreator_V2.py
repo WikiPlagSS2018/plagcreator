@@ -549,9 +549,6 @@ class AlgorithmComparator:
             plt.xlabel("number of chars")
             plt.ylabel("number of occurences")
 
-
-
-
         for idx, algo in enumerate(self.algo_results):
             put_elapsed_time_into_distr(algo[1])
             put_input_text_deviation_into_distr(algo[1])
@@ -570,8 +567,6 @@ class AlgorithmComparator:
         print(statistical_comparison_results.to_string())
 
         plt.show()
-
-
 
 
 if __name__ == "__main__":
