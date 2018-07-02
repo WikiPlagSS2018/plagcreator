@@ -518,12 +518,12 @@ class AlgorithmComparator:
                     if algo_1[0] != algo_2[0]:
                         p_list = list([algo_1[0], algo_2[0]])
                         for par in parameters:
-                            u, p = stats.mannwhitneyu(algo_1[1][par], algo_2[1][par])
+                            t, p = stats.wilcoxon(algo_1[1][par], algo_2[1][par])
                             p_list.append(p)
                         results.loc[count] = p_list
                         count = count + 1
 
-            results.to_csv('mannwhitney_difference_results.csv')
+            results.to_csv('wilcoxon_difference_results.csv')
             return results
 
 
@@ -574,7 +574,7 @@ if __name__ == "__main__":
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
     # create 10 documents, each containing 2 "self-written" sections and 4 plagiarized sections, -1 = select plag-sections
     # randomly from the first 450,000 wiki-articles
-    my_plagiarisms_for_tests = plagiarism_creator.create(250, 2, 4, -1)
+    my_plagiarisms_for_tests = plagiarism_creator.create(10, 2, 4, -1)
 
     # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
