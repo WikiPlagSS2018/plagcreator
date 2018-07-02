@@ -7,7 +7,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.stats import stats
+import scipy.stats as stats
 from collections import defaultdict
 
 
@@ -574,7 +574,7 @@ if __name__ == "__main__":
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
     # create 10 documents, each containing 2 "self-written" sections and 4 plagiarized sections, -1 = select plag-sections
     # randomly from the first 450,000 wiki-articles
-    my_plagiarisms_for_tests = plagiarism_creator.create(10, 2, 4, -1)
+    my_plagiarisms_for_tests = plagiarism_creator.create(250, 2, 4, -1)
 
     # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
