@@ -86,7 +86,7 @@ Example:
 1. git clone https://github.com/WikiplagSS2018/plagcreator
 2. start main of PlagCreator_V2.py in IDE (IntelliJ IDEA recommended)
 
-Hint: functionality of PlagCreator_V2 is described in examples in it's main.
+Hint: functionality of PlagCreator_V2 is described in examples in it's main. Also in it's classes and methods documentation.
 
 ### Comparison
 

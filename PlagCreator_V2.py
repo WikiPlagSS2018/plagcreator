@@ -22,6 +22,15 @@ class AlgorithmTester:
         self.plagiarisms = plagiarisms
 
     def analyze(self, output_mode):
+        """
+        Analyze means: compare the created and found by analysis values
+        - Wiki IDs used for plags
+        - plag positions in input text
+        - plag positions in wiki text
+        (- elapsed time of computing is put to analysis response as well)
+        :param output_mode: choose 'object' or 'string' as output format
+        :return: the analysis results
+        """
 
         analysis_results = list()
 
@@ -108,6 +117,11 @@ class AlgorithmTester:
         return self.get_analysis_response(plagiarism[0][1])
 
     def get_analysis_response_for_input_file(self, input_file):
+        """
+        Get analysis response for text in file
+        :param input_file: the file with the text to test
+        :return: analysis response
+        """
         with open(input_file, 'r', encoding='utf-8') as my_input_file:
             plag_text = my_input_file.read()
         return self.get_analysis_response(plag_text)
@@ -122,6 +136,11 @@ class AlgorithmTester:
 
     @staticmethod
     def save_analysis_response_to_output_file(analysis_response, output_file):
+        """
+        Store an analysis response to file (json format)
+        :param analysis_response: analysis response to store
+        :param output_file: file to store analysis response in
+        """
         file = open(output_file, "w", encoding='utf-8')
         file.write(json.dumps(analysis_response, indent=4, sort_keys=True))  # beautification
         file.close()
@@ -369,6 +388,10 @@ class PlagiarismCreator:
 
     @staticmethod
     def save_plagiarism_text_only_to_file(plagiarisms):
+        """
+        Stores the plagiarism text part of each plagiarism to a file in folder ./request
+        :param plagiarisms: the plagiarisms to store
+        """
         # create output_dir if not existing
         if not os.path.exists("request"):
             os.makedirs("request")
@@ -408,14 +431,24 @@ class PlagiarismCreator:
 
 
 class AnalysisResult:
-    # suffixes: gt = ground truth; ar = analysis response
-    # plag_ids_gt (type = list of scalars): plags that were placed into the text that was analyzed
-    # plag_ids_ar (type = list of scalars): plags that were identified by the algorithm
-    # input_text_positions_gt (type = list of tuples[from, to]): true text positions of plags in input text
-    # input_text_positions_ar (type = list of tuples[from, to]): text pos of plags in input text as determined by algo
-    # same with wiki article positions
+    """
+    An analysis result of plagCreator_V2
+    """
     def __init__(self, elapsed_time=None, plag_ids_gt=None, plag_ids_ar=None, input_text_positions_gt=None,
                  input_text_positions_ar=None, wiki_text_positions_gt=None, wiki_text_positions_ar=None):
+        """
+        suffixes: gt = ground truth; ar = analysis response
+
+        :param elapsed_time: elapsed time of computation of detection algorithm
+        :param plag_ids_gt (type = list of scalars): plags that were placed into the text that was analyzed
+        :param plag_ids_ar (type = list of scalars): plags that were identified by the algorithm
+        :param input_text_positions_gt (type = list of tuples[from, to]): true text positions of plags in input text
+        :param input_text_positions_ar (type = list of tuples[from, to]): text pos of plags in input text as determined
+        by algo
+        :param wiki_text_positions_gt (type = list of tuples[from, to]): true text positions of plags in wiki text
+        :param wiki_text_positions_ar (type = list of tuples[from, to]): text pos of plags in wiki text as determined
+        by algo
+        """
         self.elapsed_time = elapsed_time
 
         self.plag_ids_gt = plag_ids_gt
@@ -428,9 +461,16 @@ class AnalysisResult:
 
 
 class AlgorithmComparator:
-    # it is important that all algorithms have been fed with the same texts
-    # algo_results is supposed to be a list of tuples with ('name of algo', AnalysisResult-Object)
+    """
+    It is important that all algorithms have been fed with the same texts!
+
+    """
     def __init__(self, algo_results):
+        """
+        Creates an AlgorithmComparator
+
+        :param algo_results: is supposed to be a list of tuples with ('name of algo', AnalysisResult-Object)
+        """
         self.algo_results = algo_results
         self.wiki_text_deviation_distr = None
         self.input_text_deviation_distr = None
@@ -440,6 +480,9 @@ class AlgorithmComparator:
                                           "average_share_plags_found", "elapsed_time"])
 
     def compare_algorithms(self):
+        """
+        TODO
+        """
 
         # average per input text
         def get_average_elapsed_time(results):
