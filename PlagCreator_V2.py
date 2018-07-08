@@ -592,9 +592,9 @@ if __name__ == "__main__":
 
     # Step 1: create plagiarisms
     plagiarism_creator = PlagiarismCreator()  # or: PlagiarismCreator("http://localhost:8080/wikiplag/rest/documents/")
-    # create 22 documents, each containing 2 "self-written" sections + 4 plagiarized sections, -1 = select plag-sections
+    # create 21 documents, each containing 2 "self-written" sections + 4 plagiarized sections, -1 = select plag-sections
     # randomly from the first 450,000 wiki-articles:
-    my_plagiarisms_for_tests = plagiarism_creator.create(22, 2, 4, -1)
+    my_plagiarisms_for_tests = plagiarism_creator.create(21, 2, 4, -1)
 
     # Step 2: test an algorithm
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
@@ -621,12 +621,12 @@ if __name__ == "__main__":
                                                       analysis_wikiplag_tester_test_short_stopwordlist)]))
     algorithm_comparator.compare_algorithms()
 
-    # II.) Example usage of input/ output file read and write
+    # II.) Example usage of input/ output file read and write (optional)
 
     # Save the plagiarism texts to the folder "request"
     plagiarism_creator.save_plagiarism_text_only_to_file(my_plagiarisms_for_tests)
 
-    # Get analysis response for stored files in folder
+    # Get analysis response for stored files
     analysis_resp = wikiplag_tester.get_analysis_response_for_input_file('request/input0.txt')
 
     # Store analysis response to folder response (json format)
