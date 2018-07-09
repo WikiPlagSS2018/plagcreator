@@ -27,6 +27,8 @@ Tool to generate plagiarisms, to test detection algorithm(s) and to compare the 
 
 (Optional: stores the generated plagiarisms in the ./request directory and analysis responses to ./response)
 
+09-07-2018 Tested on Ubuntu 14.04 & 16.04, IntelliJ IDEA 2018.1.5 (Ultimate) with python 3.6.4
+
 ### API requirement: analysis endpoint
 To test an detection algorithm with PlagCreator_V2, an analysis endpoint has to be given as in wikiplag project.
 
