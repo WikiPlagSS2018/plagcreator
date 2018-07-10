@@ -481,7 +481,13 @@ class AlgorithmComparator:
 
     def compare_algorithms(self):
         """
-        TODO
+        Results are taken out of the analysis result objects (one for each algo) and put into lists.
+        The data in the lists gets appended to a data frame, which ultimately hosts the data of all algorithms and can be
+        grouped by algorithm.
+        Then for each combination of algorithms and for each parameter, the Wilcoxon signed-rank test is performed.
+        It yields a test parameter (t) which is not that interesting, and a p value. If the p value is below a threshold
+        of 0.05, the difference can be considered non-random, implying a significant difference between the algorithms
+        on the parameter under investigation.
         """
 
         # average per input text

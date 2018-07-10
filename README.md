@@ -98,9 +98,18 @@ A typical rule is to require that n > 20.
 
 So create at least 21 plagiarisms for a testing sample used for testing of detection algorithms and comparison of the results. 
 
+The Wilcoxon signed-rank test is used, because it is a non-parametric test for related samples. A non-parametric test should be 
+reasonable, because most of the result distributions are right-skewed and normal distributions cannot be assumed.
+A test for related samples seemed reasonable, because all algorithms are fed with the same texts, which act as samples.
+
+The Wilcoxon signed-rank test yields a p-value, which indicates whether a difference between two algorithms can be considered
+random or non-random/significant. If the p-value is below 0.05, there is evidence for the difference being significant.
+
 #### Persistence of comparison result
 The comparison results are stored in files:
 
+Detailed results for all input texts:
 ```./algo_results_detailed.csv```
 
+Results for statistical comparison of algorithms:
 ```./wilcoxon_difference_results.csv```
