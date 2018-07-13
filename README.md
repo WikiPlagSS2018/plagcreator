@@ -91,19 +91,18 @@ Example:
 Hint: functionality of PlagCreator_V2 is described in examples in it's main. Also in it's classes and methods documentation.
 
 ### Comparison
-
-#### Minimum plagiarism sample size
-Because the normal approximation is used for the calculations, the samples used should be large. 
-A typical rule is to require that n > 20. 
-
-So create at least 21 plagiarisms for a testing sample used for testing of detection algorithms and comparison of the results. 
-
 The Wilcoxon signed-rank test is used, because it is a non-parametric test for related samples. A non-parametric test should be 
 reasonable, because most of the result distributions are right-skewed and normal distributions cannot be assumed.
 A test for related samples seemed reasonable, because all algorithms are fed with the same texts, which act as samples.
 
 The Wilcoxon signed-rank test yields a p-value, which indicates whether a difference between two algorithms can be considered
 random or non-random/significant. If the p-value is below 0.05, there is evidence for the difference being significant.
+
+#### Minimum plagiarism sample size
+Because the normal approximation is used for the calculations, the samples used should be large. 
+A typical rule is to require that n > 20. 
+
+So create at least 21 plagiarisms for a testing sample used for testing of detection algorithms and comparison of the results. 
 
 #### Persistence of comparison result
 The comparison results are stored in files:
