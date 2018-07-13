@@ -649,26 +649,21 @@ if __name__ == "__main__":
     wikiplag_tester = AlgorithmTester(my_plagiarisms_for_tests,
                                       "http://wikiplag.f4.htw-berlin.de:8080/wikiplag/rest/analyse")
 
-    wikiplag_tester_test_short_stopwordlist = AlgorithmTester(my_plagiarisms_for_tests,
-                                                              "http://localhost:8080/wikiplag/rest/analyse")
+    print(wikiplag_tester.analyze('string'))
 
-    # Example usage for another algorithm:
+    # Example usage for another algorithm (word2vec):
     # word2vec_tester = AlgorithmTester(my_plagiarisms_for_tests, "put analysis_endpoint of word2vec algorithm here")
 
-    # Put tester objects into list
-    # algorithm_testers = [wikiplag_tester, ...]
-
-    # this needs to be done in a loop if there is more than one algorithm, results need to be put in a list
-    analysis_results_wikiplag = wikiplag_tester.analyze('object')
-    analysis_wikiplag_tester_test_short_stopwordlist = wikiplag_tester_test_short_stopwordlist.analyze("object")
-    #  print(wikiplag_tester.analyze('string'))
+    # this could be done in a loop if there is more than one algorithm, results need to be put in a list
+    # analysis_results_wikiplag = wikiplag_tester.analyze('object')
+    # analysis_results_word2vec = word2vec_tester.analyze("object")
 
     # Step 3: Compare the results
     # the list is fed into the AlgorithmComparator
-    algorithm_comparator = AlgorithmComparator(list([("wikiplag_long_stopwordlist", analysis_results_wikiplag),
-                                                     ("wikiplag_short_stopwordlist",
-                                                      analysis_wikiplag_tester_test_short_stopwordlist)]))
-    algorithm_comparator.compare_algorithms()
+    # algorithm_comparator = AlgorithmComparator(list([("wikiplag", analysis_results_wikiplag),
+    #                                                  ("word2vec", analysis_results_word2vec)]))
+
+    # algorithm_comparator.compare_algorithms()
 
     # II.) Example usage of input/ output file read and write (optional)
 
@@ -679,4 +674,4 @@ if __name__ == "__main__":
     analysis_resp = wikiplag_tester.get_analysis_response_for_input_file('request/input0.txt')
 
     # Store analysis response to folder response (json format)
-    wikiplag_tester.save_analysis_response_to_output_file(analysis_resp, 'response/response.txt')
+    wikiplag_tester.save_analysis_response_to_output_file(analysis_resp, 'response/response0.txt')
